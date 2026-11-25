@@ -12,3 +12,11 @@ services:
         value: "*"
       - key: MAX_UPLOAD_MB
         value: "12"
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRE_HOURS
+        value: "24"
+      - key: ADMIN_API_KEY
+        generateValue: true
