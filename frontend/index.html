@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#11111f">
+  <meta name="description" content="FaceMagic AI — transforme imagens com inteligência artificial.">
+  <title>FaceMagic AI</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="ambient ambient-one"></div><div class="ambient ambient-two"></div>
+  <header class="topbar">
+    <a class="brand" href="#" aria-label="FaceMagic AI início"><span class="brand-mark">✦</span><span>FaceMagic <b>AI</b></span></a>
+    <nav><a href="#como-funciona">Como funciona</a><a href="#criar">Criar imagem</a></nav>
+    <span class="status"><i></i> Ambiente de demonstração</span>
+  </header>
+  <main>
+    <section class="hero">
+      <div class="eyebrow"><span>✧</span> CRIATIVIDADE COM INTELIGÊNCIA ARTIFICIAL</div>
+      <h1>Seu rosto. <span>Sua magia.</span></h1>
+      <p class="hero-copy">Combine uma foto sua com uma imagem de referência e prepare sua criação. Você controla as imagens e escolhe como usar sua criatividade.</p>
+      <a class="primary-link" href="#criar">Começar agora <span>↘</span></a>
+    </section>
+
+    <section class="workspace" id="criar">
+      <div class="section-heading"><div><span class="eyebrow">ESTÚDIO FACE MAGIC</span><h2>Prepare sua transformação</h2></div><span class="pill">2 imagens necessárias</span></div>
+      <div class="upload-grid">
+        <label class="upload-card" for="sourceImage">
+          <input id="sourceImage" type="file" accept="image/jpeg,image/png,image/webp">
+          <span class="upload-icon">＋</span><strong>1. Sua foto</strong><span class="muted">Escolha uma foto nítida do rosto que você tem autorização para usar.</span>
+          <img class="preview" id="sourcePreview" alt="Prévia da sua foto">
+          <span class="choose-button">Selecionar foto</span>
+        </label>
+        <label class="upload-card" for="targetImage">
+          <input id="targetImage" type="file" accept="image/jpeg,image/png,image/webp">
+          <span class="upload-icon">✧</span><strong>2. Imagem de referência</strong><span class="muted">Escolha a imagem de destino. Use apenas imagens que você tem direito ou autorização para utilizar.</span>
+          <img class="preview" id="targetPreview" alt="Prévia da imagem de referência">
+          <span class="choose-button">Selecionar referência</span>
+        </label>
+      </div>
+      <div class="action-row">
+        <label class="consent"><input id="consent" type="checkbox"> Confirmo que tenho autorização para usar as duas imagens e que não vou apresentar o resultado como registro autêntico de outra pessoa.</label>
+        <button id="createButton" class="create-button" disabled>Preparar transformação <span>✦</span></button>
+      </div>
+      <div id="notice" class="notice" role="status" aria-live="polite">Selecione as duas imagens e confirme a autorização para continuar.</div>
+    </section>
+
+    <section class="steps" id="como-funciona">
+      <div><span class="step-number">01</span><h3>Envie as imagens</h3><p>Escolha a foto de origem e a imagem de referência.</p></div>
+      <div><span class="step-number">02</span><h3>Prepare a criação</h3><p>A plataforma valida os arquivos e prepara o pedido de processamento.</p></div>
+      <div><span class="step-number">03</span><h3>Veja o resultado</h3><p>Quando o motor de IA estiver configurado, você poderá visualizar e baixar o resultado.</p></div>
+    </section>
+  </main>
+  <footer><span class="brand"><span class="brand-mark">✦</span> FaceMagic <b>AI</b></span><span>Criações sintéticas devem ser identificadas como conteúdo gerado ou alterado por IA.</span></footer>
+  <script src="./app.js"></script>
+</body>
+</html>
