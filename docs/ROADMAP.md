@@ -13,7 +13,8 @@
 - [ ] Confirmar custo, quota e capacidade de execução; Render Free não é GPU.
 - [ ] Implementar adaptador real do modelo e testes de qualidade/segurança.
 - [ ] Criar worker/fila de processamento e recuperação de tarefas.
-- [ ] Conectar Neon, migrações e transações de créditos.
+- [x] Conectar Neon, criar schema automaticamente e implementar cadastro/login e saldo/extrato básico de créditos.
+- [ ] Implementar compra/consumo de créditos ligado a tarefas reais, com transações e reembolso em falhas.
 - [ ] Implementar cadastro, login, recuperação de conta e sessões seguras.
 - [ ] Selecionar armazenamento privado, URLs assinadas e exclusão automática.
 - [ ] Implementar painel do usuário, galeria, histórico, download e exclusão.
