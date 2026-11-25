@@ -23,6 +23,32 @@
       <a class="primary-link" href="#criar">Começar agora <span>↘</span></a>
     </section>
 
+    <section class="account-panel" id="conta">
+      <div class="section-heading"><div><span class="eyebrow">SUA CONTA</span><h2>Entre ou crie seu acesso</h2></div><span class="pill">Conta gratuita</span></div>
+      <div class="account-grid">
+        <form id="loginForm" class="account-form">
+          <h3>Já tenho conta</h3>
+          <label>E-mail<input id="loginEmail" type="email" autocomplete="email" required maxlength="254"></label>
+          <label>Senha<input id="loginPassword" type="password" autocomplete="current-password" required minlength="10" maxlength="128"></label>
+          <button class="account-button" type="submit">Entrar</button>
+        </form>
+        <form id="registerForm" class="account-form">
+          <h3>Quero me cadastrar</h3>
+          <label>Nome (opcional)<input id="registerName" type="text" autocomplete="name" maxlength="80"></label>
+          <label>E-mail<input id="registerEmail" type="email" autocomplete="email" required maxlength="254"></label>
+          <label>Senha (mínimo 10 caracteres)<input id="registerPassword" type="password" autocomplete="new-password" required minlength="10" maxlength="128"></label>
+          <button class="account-button" type="submit">Criar conta</button>
+        </form>
+      </div>
+      <div id="accountStatus" class="notice" role="status" aria-live="polite">O cadastro será ativado quando o banco Neon e as chaves de autenticação forem configurados no Render.</div>
+      <div id="accountDashboard" class="account-dashboard" hidden>
+        <div><strong id="accountWelcome">Minha conta</strong><span id="accountEmail"></span></div>
+        <div class="credit-balance"><span>Meus créditos</span><strong id="creditBalance">0</strong></div>
+        <button id="refreshCredits" class="account-button secondary" type="button">Atualizar saldo</button>
+        <button id="logoutButton" class="account-button secondary" type="button">Sair</button>
+      </div>
+    </section>
+
     <section class="workspace" id="criar">
       <div class="section-heading"><div><span class="eyebrow">ESTÚDIO FACE MAGIC</span><h2>Prepare sua transformação</h2></div><span class="pill">2 imagens necessárias</span></div>
       <div class="upload-grid">
