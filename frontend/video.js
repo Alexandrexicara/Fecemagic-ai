@@ -51,7 +51,7 @@
   async function startSegmentation() {
     if (!window.SelfieSegmentation) throw new Error("O módulo de segmentação não carregou. Atualize a página e tente novamente.");
     if (!segmenter) {
-      segmenter = new SelfieSegmentation({ locateFile: file => "https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation@0.1.167/" + file });
+      segmenter = new SelfieSegmentation({ locateFile: file => "https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation@0.1.1675465747/" + file });
       segmenter.setOptions({ modelSelection: 1, selfieMode: true });
       segmenter.onResults(results => {
         const width = results.image.width;
