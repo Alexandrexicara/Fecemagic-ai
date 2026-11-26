@@ -55,8 +55,9 @@ createButton.addEventListener("click", async () => {
 });
 window.addEventListener("beforeunload", () => objectUrls.forEach(URL.revokeObjectURL.bind(URL)));
 
-/* Seletor de cenários para o futuro pipeline de vídeo. A seleção e a prévia
-   funcionam no navegador; a composição no arquivo final aguarda o worker de vídeo. */
+/* Galeria de papéis de parede com fotografias reais.
+   A imagem escolhida é usada na prévia; o pipeline de vídeo ainda precisa
+   aplicar o cenário ao arquivo renderizado. */
 (() => {
   const options = [...document.querySelectorAll(".background-option")];
   const customInput = document.getElementById("customBackground");
@@ -64,7 +65,19 @@ window.addEventListener("beforeunload", () => objectUrls.forEach(URL.revokeObjec
   const status = document.getElementById("backgroundStatus");
   const clearButton = document.getElementById("clearBackground");
   if (!options.length || !preview || !customInput) return;
-  const presets = ["original","office","beach","studio","city","library","nature"];
+  const photos = {
+    beach: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1600&h=900&fit=crop",
+    office: "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=1600&h=900&fit=crop",
+    market: "https://images.unsplash.com/photo-1542838132-92c53300491e?w=1600&h=900&fit=crop",
+    salon: "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=1600&h=900&fit=crop",
+    restaurant: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1600&h=900&fit=crop",
+    kitchen: "https://images.unsplash.com/photo-1556911220-bff31c812dba?w=1600&h=900&fit=crop",
+    living: "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=1600&h=900&fit=crop",
+    gym: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1600&h=900&fit=crop",
+    hotel: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1600&h=900&fit=crop",
+    garden: "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=1600&h=900&fit=crop",
+    city: "https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=1600&h=900&fit=crop"
+  };
   let customUrl = null;
   function choose(name) {
     options.forEach(button => {
@@ -72,9 +85,12 @@ window.addEventListener("beforeunload", () => objectUrls.forEach(URL.revokeObjec
       button.classList.toggle("selected", active);
       button.setAttribute("aria-pressed", String(active));
     });
-    preview.className = "scene-preview wallpaper-" + name;
-    preview.style.backgroundImage = "";
-    status.textContent = "Cenário " + (name === "original" ? "original" : name) + " selecionado. A prévia está pronta; a aplicação no vídeo final depende do processamento de vídeo.";
+    preview.className = "scene-preview" + (name === "original" ? " wallpaper-original" : "");
+    preview.style.backgroundImage = name === "original" ? "" : "url('" + photos[name] + "')";
+    const label = options.find(button => button.dataset.background === name)?.innerText.trim() || "original";
+    status.textContent = name === "original"
+      ? "Sem fundo adicional: a gravação mantém o cenário original."
+      : "Fotografia real de " + label + " selecionada para a prévia. A aplicação no vídeo final depende da ativação do processamento de vídeo.";
   }
   options.forEach(button => button.addEventListener("click", () => {
     if (customUrl) { URL.revokeObjectURL(customUrl); customUrl = null; }
@@ -94,7 +110,7 @@ window.addEventListener("beforeunload", () => objectUrls.forEach(URL.revokeObjec
     options.forEach(button => { button.classList.remove("selected"); button.setAttribute("aria-pressed","false"); });
     preview.className = "scene-preview custom-scene";
     preview.style.backgroundImage = "url('" + customUrl + "')";
-    status.textContent = "Sua imagem personalizada está selecionada para o cenário do vídeo.";
+    status.textContent = "Sua fotografia personalizada está selecionada para a prévia do cenário.";
   });
   clearButton?.addEventListener("click", () => {
     if (customUrl) URL.revokeObjectURL(customUrl);
