@@ -13,7 +13,7 @@
     status.style.color = isError ? "#fca5a5" : "";
   };
   async function request(path, options={}) {
-    if (!api) throw new Error("Backend ainda não configurado. Publique a API no Render e informe o endereço em frontend/config.js.");
+    if (!api) throw new Error("Endereço da API não configurado.");
     const response = await fetch(api + path, {
       ...options,
       headers: {"Content-Type":"application/json", ...(token()?{"Authorization":"Bearer "+token()}:{}), ...(options.headers||{})}
@@ -21,6 +21,19 @@
     const data = await response.json().catch(()=>({}));
     if (!response.ok) throw new Error(data.detail || "Não foi possível concluir a solicitação.");
     return data;
+  }
+  async function refreshSystemStatus() {
+    if (!api) { setStatus("API não configurada. O serviço de conta não pode ser consultado.", true); return; }
+    try {
+      const health = await request("/api/health");
+      const db = health.database === "connected" ? "Neon conectado" :
+        health.database === "not_configured" ? "DATABASE_URL não configurada no Render" : "Neon configurado, mas indisponível";
+      const auth = health.auth_configured ? "autenticação configurada" : "JWT_SECRET ausente no Render";
+      const registration = health.registration_enabled ? "Cadastro e login disponíveis." : "Cadastro e login bloqueados até corrigir os itens acima.";
+      setStatus(db + " · " + auth + ". " + registration, !health.registration_enabled);
+    } catch (error) {
+      setStatus("Não foi possível consultar o estado real da API: " + error.message, true);
+    }
   }
   async function loadAccount() {
     if (!token()) { dashboard.hidden = true; return; }
@@ -35,6 +48,7 @@
       sessionStorage.removeItem(tokenKey);
       dashboard.hidden = true;
       setStatus(error.message, true);
+      await refreshSystemStatus();
     }
   }
   loginForm.addEventListener("submit", async event => {
@@ -72,7 +86,8 @@
   document.getElementById("logoutButton").addEventListener("click", () => {
     sessionStorage.removeItem(tokenKey);
     dashboard.hidden = true;
-    setStatus("Você saiu da sua conta.");
+    refreshSystemStatus();
   });
+  refreshSystemStatus();
   loadAccount();
 })();
