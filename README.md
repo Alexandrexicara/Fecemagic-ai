@@ -3,7 +3,7 @@
 Plataforma em desenvolvimento para criação de imagens sintéticas com IA, com foco em consentimento, privacidade e uso responsável.
 
 ## O que já está no código
-- Interface web responsiva com upload e pré-visualização local.
+- Interface web responsiva com upload e pré-visualização local.\n- Seletor de cenários para vídeo com fundos predefinidos e upload de imagem personalizada (prévia no navegador; renderização final de vídeo ainda pendente).
 - Área de cadastro/login com sessão temporária no navegador.
 - API FastAPI com validação de imagens, health check e endpoint de capacidades.
 - Conexão PostgreSQL/Neon via psycopg, criação automática das tabelas e autenticação com hash Argon2 + token JWT.
