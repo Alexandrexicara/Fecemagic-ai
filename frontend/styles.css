@@ -131,3 +131,13 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline-color:#00c853}
 .camera-actions button:disabled{opacity:.45;cursor:not-allowed}
 .video-disclosure{margin:14px 0 0;color:#ffbd8a;font-size:11px;line-height:1.65}
 @media(max-width:760px){.video-studio{padding:17px 12px}.video-mode-grid{grid-template-columns:1fr}.video-mode-card{padding:14px}}
+
+
+/* Chamadas internas WebRTC */
+.call-toolbar{display:flex;gap:10px;align-items:end;flex-wrap:wrap;margin-top:18px}
+.call-join-label{display:flex;flex-direction:column;gap:7px;color:var(--muted);font-size:11px;flex:1;min-width:220px}
+.call-join-label input{width:100%;padding:12px;border:1px solid #35543a;border-radius:9px;background:#080f09;color:var(--text);font:inherit}
+.call-video-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}
+.call-video-grid>div{min-width:0;padding:12px;border:1px solid #263629;border-radius:12px;background:#080f09}
+.call-video-grid .video-preview{min-height:180px;max-height:360px;object-fit:cover}
+@media(max-width:760px){.call-video-grid{grid-template-columns:1fr}.call-toolbar>*{width:100%}}
