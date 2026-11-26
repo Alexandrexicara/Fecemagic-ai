@@ -62,3 +62,24 @@ body{background:var(--bg)}
 .background-option:hover{border-color:#ff741788}
 .scene-preview-label{color:var(--neon-green)}
 a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--neon-green);outline-offset:3px}
+
+
+/* Ajuste fino: verde neon mais profundo, mantendo luminosidade fluorescente */
+:root{
+  --neon-green:#00c853;
+  --deep-green:#008f3d;
+}
+.brand b,.eyebrow,.step-number,.scene-preview-label{color:#00c853}
+.brand-mark{background:linear-gradient(135deg,#006b32,#00c853);color:#031108}
+.status,.pill{color:#70f0a2;border-color:#00c85370}
+.status i{background:#00c853}
+.hero h1 span{background:linear-gradient(90deg,#008f3d,#00c853 68%,#ff7417);background-clip:text;color:transparent}
+.primary-link,.create-button,.account-button{background:linear-gradient(105deg,#006b32,#009f46 72%,#00c853);color:#f4fff7;box-shadow:0 8px 30px #00c85324}
+.upload-card:hover{border-color:#00c853}
+.upload-icon{color:#00c853;background:#00c85320}
+.consent input{accent-color:#00c853}
+.notice{background:#00c85310;border-color:#00c85333;color:#8cf0ad}
+.credit-balance strong{color:#00c853}
+.background-option.selected{border-color:#00c853;box-shadow:0 0 0 1px #00c85355,0 0 16px #00c85320}
+.background-upload{border-color:#00c85370}
+a:focus-visible,button:focus-visible,input:focus-visible{outline-color:#00c853}
