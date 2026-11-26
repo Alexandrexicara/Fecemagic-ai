@@ -26,6 +26,10 @@
     if (!api) { setStatus("API não configurada. O serviço de conta não pode ser consultado.", true); return; }
     try {
       const health = await request("/api/health");
+      if (typeof health.auth_configured !== "boolean" || typeof health.registration_enabled !== "boolean") {
+        setStatus("A API está online, mas o Render ainda está atualizando o diagnóstico de Neon e autenticação. Tente novamente em instantes.");
+        return;
+      }
       const db = health.database === "connected" ? "Neon conectado" :
         health.database === "not_configured" ? "DATABASE_URL não configurada no Render" : "Neon configurado, mas indisponível";
       const auth = health.auth_configured ? "autenticação configurada" : "JWT_SECRET ausente no Render";
