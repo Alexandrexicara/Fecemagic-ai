@@ -120,6 +120,7 @@ def health():
         "version": "0.3.0",
         "database": "connected" if db_ready() else "not_configured_or_unavailable",
         "face_swap_engine": "ready" if status.configured else "not_configured",
+        "nvidia_api_configured": bool(os.getenv("NVIDIA_API_KEY", "").strip()),
     }
 
 
@@ -136,6 +137,8 @@ def capabilities():
         "accounts": database and bool(JWT_SECRET),
         "credits": database and bool(JWT_SECRET),
         "database": database,
+        "nvidia_api_configured": bool(os.getenv("NVIDIA_API_KEY", "").strip()),
+        "video_backgrounds": "preview_only_until_video_pipeline_is_enabled",
         "message": status.reason,
     }
 
