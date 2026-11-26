@@ -113,3 +113,21 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline-color:#00c853}
   .background-option{height:98px}
   .wallpaper{height:62px}
 }
+
+
+/* Estúdio de vídeo: prévia local de arquivo e webcam */
+.video-studio{margin-top:26px;padding:22px;border:1px solid #263629;border-radius:16px;background:#0d140f}
+.video-mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}
+.video-mode-card{min-width:0;padding:18px;border:1px solid #ffffff1b;border-radius:13px;background:#101a12}
+.video-mode-card h4{font:600 17px 'Space Grotesk';margin:0 0 8px;color:#dfffe5}
+.video-mode-card>p{font-size:12px;line-height:1.6;color:var(--muted)}
+.video-file-label{display:inline-flex;padding:11px 14px;border-radius:9px;background:#006b32;color:#fff;font-size:12px;font-weight:700;cursor:pointer}
+#recordedVideo{display:none}
+.video-preview{display:block;width:100%;max-height:300px;margin-top:14px;border-radius:10px;background:#050805;object-fit:contain}
+.video-preview[hidden]{display:none}
+.video-status{min-height:36px;padding:10px;border-radius:8px;background:#00c85312;color:#a8e9ba;font-size:11px;line-height:1.5}
+.camera-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}
+.camera-actions button{font-size:12px}
+.camera-actions button:disabled{opacity:.45;cursor:not-allowed}
+.video-disclosure{margin:14px 0 0;color:#ffbd8a;font-size:11px;line-height:1.65}
+@media(max-width:760px){.video-studio{padding:17px 12px}.video-mode-grid{grid-template-columns:1fr}.video-mode-card{padding:14px}}
