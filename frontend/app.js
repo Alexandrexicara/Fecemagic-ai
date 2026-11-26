@@ -79,6 +79,7 @@ window.addEventListener("beforeunload", () => objectUrls.forEach(URL.revokeObjec
   ];
   const safeScenes = scenes.filter(([,id]) => !id.includes(" "));
   let selectedUrl = null;
+  window.FaceMagicBackground = { getSelectedUrl: () => selectedUrl };
   let customUrl = null;
   function selectScene(name, url, button) {
     grid.querySelectorAll(".background-option").forEach(b => {
