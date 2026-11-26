@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#11111f">
-  <meta name="description" content="FaceMagic AI — transforme imagens com inteligência artificial.">
+  <meta name="description" content="FaceMagic AI — troca de rosto em imagens e vídeos com inteligência artificial.">
   <title>FaceMagic AI</title>
   <link rel="stylesheet" href="./styles.css">
 </head>
@@ -12,14 +12,14 @@
   <div class="ambient ambient-one"></div><div class="ambient ambient-two"></div>
   <header class="topbar">
     <a class="brand" href="#" aria-label="FaceMagic AI início"><span class="brand-mark">✦</span><span>FaceMagic <b>AI</b></span></a>
-    <nav><a href="#como-funciona">Como funciona</a><a href="#criar">Criar imagem</a></nav>
-    <span class="status"><i></i> Ambiente de demonstração</span>
+    <nav><a href="#como-funciona">Como funciona</a><a href="#criar">Criar imagem</a><a href="#video-studio">Vídeo e câmera</a></nav>
+    <span class="status"><i></i> FaceMagic AI</span>
   </header>
   <main>
     <section class="hero">
       <div class="eyebrow"><span>✧</span> CRIATIVIDADE COM INTELIGÊNCIA ARTIFICIAL</div>
       <h1>Seu rosto. <span>Sua magia.</span></h1>
-      <p class="hero-copy">Combine uma foto sua com uma imagem de referência e prepare sua criação. Você controla as imagens e escolhe como usar sua criatividade.</p>
+      <p class="hero-copy">Troca de rosto em imagens, vídeos gravados e câmera ao vivo. Você controla as imagens e escolhe como usar sua criatividade.</p>
       <a class="primary-link" href="#criar">Começar agora <span>↘</span></a>
     </section>
 
@@ -40,7 +40,7 @@
           <button class="account-button" type="submit">Criar conta</button>
         </form>
       </div>
-      <div id="accountStatus" class="notice" role="status" aria-live="polite">O cadastro será ativado quando o banco Neon e as chaves de autenticação forem configurados no Render.</div>
+      <div id="accountStatus" class="notice" role="status" aria-live="polite">Consultando o estado do banco Neon e da autenticação…</div>
       <div id="accountDashboard" class="account-dashboard" hidden>
         <div><strong id="accountWelcome">Minha conta</strong><span id="accountEmail"></span></div>
         <div class="credit-balance"><span>Meus créditos</span><strong id="creditBalance">0</strong></div>
@@ -50,21 +50,44 @@
     </section>
 
     <section class="workspace" id="criar">
-      <div class="section-heading"><div><span class="eyebrow">ESTÚDIO FACE MAGIC</span><h2>Prepare sua transformação</h2></div><span class="pill">2 imagens necessárias</span></div>
+      <div class="section-heading"><div><span class="eyebrow">ESTÚDIO FACE MAGIC</span><h2>Troca de rosto em imagem</h2></div><span class="pill">2 imagens necessárias</span></div>
       <div class="upload-grid">
         <label class="upload-card" for="sourceImage">
           <input id="sourceImage" type="file" accept="image/jpeg,image/png,image/webp">
-          <span class="upload-icon">＋</span><strong>1. Sua foto</strong><span class="muted">Escolha uma foto nítida do rosto que você tem autorização para usar.</span>
+          <span class="upload-icon">＋</span><strong>1. Foto do rosto</strong><span class="muted">Escolha uma foto nítida do rosto que você tem autorização para usar.</span>
           <img class="preview" id="sourcePreview" alt="Prévia da sua foto">
           <span class="choose-button">Selecionar foto</span>
         </label>
         <label class="upload-card" for="targetImage">
           <input id="targetImage" type="file" accept="image/jpeg,image/png,image/webp">
-          <span class="upload-icon">✧</span><strong>2. Imagem de referência</strong><span class="muted">Escolha a imagem de destino. Use apenas imagens que você tem direito ou autorização para utilizar.</span>
-          <img class="preview" id="targetPreview" alt="Prévia da imagem de referência">
+          <span class="upload-icon">✧</span><strong>2. Imagem de destino</strong><span class="muted">Escolha a imagem na qual o rosto será aplicado. Use apenas imagens autorizadas.</span>
+          <img class="preview" id="targetPreview" alt="Prévia da imagem de destino">
           <span class="choose-button">Selecionar referência</span>
         </label>
       </div>
+
+      <section class="video-studio" id="video-studio">
+        <div class="background-heading"><div><span class="eyebrow">VÍDEO E CÂMERA</span><h3>Escolha como quer fazer a troca de rosto</h3><p>Os dois modos estão preparados na interface. A prévia local funciona; o processamento de IA será liberado quando o serviço de face swap for conectado.</p></div></div>
+        <div class="video-mode-grid">
+          <div class="video-mode-card">
+            <h4>1. Vídeo gravado</h4>
+            <p>Envie um vídeo do seu computador para conferir o arquivo e a prévia.</p>
+            <label class="video-file-label" for="recordedVideo">Selecionar vídeo (MP4, WebM ou MOV)</label>
+            <input id="recordedVideo" type="file" accept="video/mp4,video/webm,video/quicktime">
+            <video id="recordedVideoPreview" class="video-preview" controls playsinline hidden></video>
+            <p id="recordedVideoStatus" class="video-status" role="status">Nenhum vídeo selecionado. Limite de 250 MB.</p>
+          </div>
+          <div class="video-mode-card">
+            <h4>2. Câmera ao vivo</h4>
+            <p>Ative sua webcam para conferir o enquadramento antes de iniciar o Live Swap.</p>
+            <video id="liveCameraPreview" class="video-preview" autoplay muted playsinline hidden></video>
+            <div class="camera-actions"><button id="startCamera" class="account-button" type="button">Ligar câmera</button><button id="stopCamera" class="account-button secondary" type="button" disabled>Desligar</button></div>
+            <p id="liveCameraStatus" class="video-status" role="status">A câmera permanece desligada até você autorizar.</p>
+          </div>
+        </div>
+        <p class="video-disclosure">Importante: a prévia não altera o rosto. A troca real em vídeo e ao vivo depende da ativação do provedor de IA, com chave própria e cobrança conforme uso. Não envie imagens de terceiros sem autorização.</p>
+      </section>
+
       <section class="background-studio" id="video-background">
         <div class="background-heading">
           <div><span class="eyebrow">CENÁRIOS DO VÍDEO</span><h3>Escolha o fundo da sua gravação</h3>
@@ -76,24 +99,25 @@
           <button type="button" class="background-clear" id="clearBackground">Remover imagem personalizada</button>
         </div>
         <div class="scene-preview-wrap"><span class="scene-preview-label">PRÉVIA DO CENÁRIO SELECIONADO</span><div id="scenePreview" class="scene-preview wallpaper-original"><span>Prévia do fundo do vídeo</span></div></div>
-        <p class="background-note" id="backgroundStatus" role="status">Cenário original selecionado. A composição no vídeo final será habilitada junto com o motor de vídeo.</p>
+        <p class="background-note" id="backgroundStatus" role="status">Cenário original selecionado. A aplicação no vídeo final depende do processamento.</p>
       </section>
       <div class="action-row">
-        <label class="consent"><input id="consent" type="checkbox"> Confirmo que tenho autorização para usar as duas imagens e que não vou apresentar o resultado como registro autêntico de outra pessoa.</label>
-        <button id="createButton" class="create-button" disabled>Preparar transformação <span>✦</span></button>
+        <label class="consent"><input id="consent" type="checkbox"> Confirmo que tenho autorização para usar as imagens e que não vou apresentar o resultado como registro autêntico de outra pessoa.</label>
+        <button id="createButton" class="create-button" disabled>Validar imagens <span>✦</span></button>
       </div>
-      <div id="notice" class="notice" role="status" aria-live="polite">Selecione as duas imagens e confirme a autorização para continuar.</div>
+      <div id="notice" class="notice" role="status" aria-live="polite">Selecione as duas imagens e confirme a autorização para validar os arquivos.</div>
     </section>
 
     <section class="steps" id="como-funciona">
-      <div><span class="step-number">01</span><h3>Envie as imagens</h3><p>Escolha a foto de origem e a imagem de referência.</p></div>
-      <div><span class="step-number">02</span><h3>Prepare a criação</h3><p>A plataforma valida os arquivos e prepara o pedido de processamento.</p></div>
-      <div><span class="step-number">03</span><h3>Veja o resultado</h3><p>Quando o motor de IA estiver configurado, você poderá visualizar e baixar o resultado.</p></div>
+      <div><span class="step-number">01</span><h3>Envie a foto e o destino</h3><p>Escolha o rosto e a imagem de referência.</p></div>
+      <div><span class="step-number">02</span><h3>Escolha vídeo ou câmera</h3><p>Use um vídeo gravado ou abra a webcam para pré-visualização.</p></div>
+      <div><span class="step-number">03</span><h3>Gere com IA</h3><p>O processamento será habilitado após a conexão e os testes do motor de face swap.</p></div>
     </section>
   </main>
-  <footer><span class="brand"><span class="brand-mark">✦</span> FaceMagic <b>AI</b></span><span>Criações sintéticas devem ser identificadas como conteúdo gerado ou alterado por IA.</span></footer>
+  <footer><span class="brand"><span class="brand-mark">✦</span> FaceMagic <b>AI</b></span><span>Conteúdo sintético deve ser identificado como gerado ou alterado por IA.</span></footer>
   <script src="./config.js"></script>
   <script src="./app.js"></script>
   <script src="./account.js"></script>
+  <script src="./video.js"></script>
 </body>
 </html>
