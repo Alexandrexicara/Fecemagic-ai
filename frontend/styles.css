@@ -154,3 +154,12 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline-color:#00c853}
 #face-calls:fullscreen .call-video-grid .video-preview{width:100%;max-height:calc(100vh - 210px);height:calc(100vh - 250px);object-fit:contain}
 #face-calls:fullscreen .call-toolbar{justify-content:center}
 @media(max-width:760px){#face-calls:fullscreen{padding:12px}#face-calls:fullscreen .call-video-grid{grid-template-columns:1fr}#face-calls:fullscreen .call-video-grid .video-preview{height:auto;max-height:38vh}}
+
+
+/* Tela cheia do estúdio de câmera/gravação */
+#video-studio:fullscreen{box-sizing:border-box;width:100vw;height:100vh;max-width:none;margin:0;padding:24px;overflow:auto;background:#080b09;display:flex;flex-direction:column;justify-content:center;z-index:9999}
+#video-studio:fullscreen .video-mode-grid{flex:1;min-height:0;align-items:center}
+#video-studio:fullscreen .video-mode-card{max-height:100%;overflow:auto}
+#video-studio:fullscreen .video-preview{max-height:45vh}
+#video-studio:fullscreen .camera-actions{justify-content:flex-start}
+@media(max-width:760px){#video-studio:fullscreen{padding:12px;justify-content:flex-start}#video-studio:fullscreen .video-mode-grid{grid-template-columns:1fr}#video-studio:fullscreen .video-preview{max-height:35vh}}
