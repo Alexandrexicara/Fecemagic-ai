@@ -83,3 +83,33 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(-
 .background-option.selected{border-color:#00c853;box-shadow:0 0 0 1px #00c85355,0 0 16px #00c85320}
 .background-upload{border-color:#00c85370}
 a:focus-visible,button:focus-visible,input:focus-visible{outline-color:#00c853}
+
+
+/* Galeria compacta: uma faixa visível com rolagem vertical interna */
+.background-options{
+  height:132px;
+  max-height:132px;
+  overflow-y:auto;
+  overflow-x:hidden;
+  grid-auto-rows:112px;
+  align-content:start;
+  padding:2px 9px 8px 2px;
+  scrollbar-width:thin;
+  scrollbar-color:#00c853 #172019;
+  overscroll-behavior:contain;
+  scrollbar-gutter:stable;
+  border:1px solid #263629;
+  border-radius:12px;
+  background:#0b100c;
+}
+.background-options::-webkit-scrollbar{width:9px}
+.background-options::-webkit-scrollbar-track{background:#172019;border-radius:10px}
+.background-options::-webkit-scrollbar-thumb{background:#00a844;border:2px solid #172019;border-radius:10px}
+.background-options::-webkit-scrollbar-thumb:hover{background:#00c853}
+.background-option{height:104px;padding:6px;gap:5px}
+.wallpaper{height:68px}
+@media(max-width:760px){
+  .background-options{height:126px;max-height:126px;grid-auto-rows:106px}
+  .background-option{height:98px}
+  .wallpaper{height:62px}
+}
