@@ -11,7 +11,7 @@
 - [x] Variáveis de ambiente documentadas e geração de segredos JWT/admin no blueprint Render.
 - [x] Documentação de arquitetura, privacidade e análise de licenças dos modelos.
 
-## Ainda precisa de implementação e testes
+## Interface de cenários adicionada\n- [x] Seletor visual de cenários predefinidos (original, escritório, praia, estúdio, cidade, biblioteca e natureza).\n- [x] Upload e prévia local de imagem de fundo personalizada.\n- [ ] Composição real do cenário no vídeo exportado (depende do pipeline de vídeo).\n\n## Ainda precisa de implementação e testes
 - [ ] Escolher um conjunto completo de modelos com licença comercial confirmada para face swap.
 - [ ] Confirmar custo, quota e capacidade de execução; Render Free não oferece GPU dedicada.
 - [ ] Implementar o adaptador real do modelo e testes de qualidade/segurança.
