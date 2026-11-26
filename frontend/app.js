@@ -54,3 +54,54 @@ createButton.addEventListener("click", async () => {
   } finally { updateButton(); }
 });
 window.addEventListener("beforeunload", () => objectUrls.forEach(URL.revokeObjectURL.bind(URL)));
+
+/* Seletor de cenários para o futuro pipeline de vídeo. A seleção e a prévia
+   funcionam no navegador; a composição no arquivo final aguarda o worker de vídeo. */
+(() => {
+  const options = [...document.querySelectorAll(".background-option")];
+  const customInput = document.getElementById("customBackground");
+  const preview = document.getElementById("scenePreview");
+  const status = document.getElementById("backgroundStatus");
+  const clearButton = document.getElementById("clearBackground");
+  if (!options.length || !preview || !customInput) return;
+  const presets = ["original","office","beach","studio","city","library","nature"];
+  let customUrl = null;
+  function choose(name) {
+    options.forEach(button => {
+      const active = button.dataset.background === name;
+      button.classList.toggle("selected", active);
+      button.setAttribute("aria-pressed", String(active));
+    });
+    preview.className = "scene-preview wallpaper-" + name;
+    preview.style.backgroundImage = "";
+    status.textContent = "Cenário " + (name === "original" ? "original" : name) + " selecionado. A prévia está pronta; a aplicação no vídeo final depende do processamento de vídeo.";
+  }
+  options.forEach(button => button.addEventListener("click", () => {
+    if (customUrl) { URL.revokeObjectURL(customUrl); customUrl = null; }
+    customInput.value = "";
+    choose(button.dataset.background);
+  }));
+  customInput.addEventListener("change", () => {
+    const file = customInput.files && customInput.files[0];
+    if (!file) return;
+    if (!["image/jpeg","image/png","image/webp"].includes(file.type) || file.size > 12*1024*1024) {
+      customInput.value = "";
+      status.textContent = "Imagem inválida. Envie JPG, PNG ou WebP de até 12 MB.";
+      return;
+    }
+    if (customUrl) URL.revokeObjectURL(customUrl);
+    customUrl = URL.createObjectURL(file);
+    options.forEach(button => { button.classList.remove("selected"); button.setAttribute("aria-pressed","false"); });
+    preview.className = "scene-preview custom-scene";
+    preview.style.backgroundImage = "url('" + customUrl + "')";
+    status.textContent = "Sua imagem personalizada está selecionada para o cenário do vídeo.";
+  });
+  clearButton?.addEventListener("click", () => {
+    if (customUrl) URL.revokeObjectURL(customUrl);
+    customUrl = null;
+    customInput.value = "";
+    choose("original");
+  });
+  window.addEventListener("beforeunload", () => { if (customUrl) URL.revokeObjectURL(customUrl); });
+  choose("original");
+})();
