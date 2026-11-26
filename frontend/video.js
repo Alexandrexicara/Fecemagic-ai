@@ -18,6 +18,26 @@
   let backgroundImage = null, backgroundUrl = null, framePending = false;
   let recorder = null, recordedChunks = [], recordedBlob = null, recordedUrl = null;
 
+  const studioFullscreenButton = document.getElementById("toggleStudioFullscreen");
+  const studioSection = document.getElementById("video-studio");
+  studioFullscreenButton?.addEventListener("click", async () => {
+    try {
+      if (document.fullscreenElement === studioSection) await document.exitFullscreen();
+      else {
+        if (!studioSection?.requestFullscreen) throw new Error("Tela cheia não suportada neste navegador.");
+        await studioSection.requestFullscreen();
+      }
+    } catch (error) {
+      if (recordingStatus) recordingStatus.textContent = "Não foi possível abrir a tela cheia: " + error.message;
+    }
+  });
+  document.addEventListener("fullscreenchange", () => {
+    if (!studioFullscreenButton) return;
+    const active = document.fullscreenElement === studioSection;
+    studioFullscreenButton.textContent = active ? "⤢ Sair da tela cheia" : "⛶ Tela cheia";
+    studioFullscreenButton.setAttribute("aria-label", active ? "Sair da tela cheia" : "Abrir estúdio em tela cheia");
+  });
+
   fileInput?.addEventListener("change", () => {
     const file = fileInput.files?.[0];
     if (!file) return;
