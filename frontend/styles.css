@@ -141,3 +141,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline-color:#00c853}
 .call-video-grid>div{min-width:0;padding:12px;border:1px solid #263629;border-radius:12px;background:#080f09}
 .call-video-grid .video-preview{min-height:180px;max-height:360px;object-fit:cover}
 @media(max-width:760px){.call-video-grid{grid-template-columns:1fr}.call-toolbar>*{width:100%}}
+
+#liveBackgroundCanvas{transform:scaleX(-1)}
+#enableVirtualBackground{margin-top:10px;font-size:12px}
+#enableVirtualBackground:disabled{opacity:.45;cursor:not-allowed}
