@@ -141,7 +141,7 @@ def capabilities():
         "image_validation": True,
         "image_face_swap": engine_status.configured,
         "recorded_video_upload": True,
-        "video_processing": False,
+        "video_processing": False,\n        "in_platform_calls": True,\n        "call_signaling": "websocket_ephemeral_single_instance",
         "live_camera_preview": True,
         "live_face_swap": False,
         "virtual_camera": False,
