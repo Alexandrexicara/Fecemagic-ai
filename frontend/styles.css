@@ -23,3 +23,42 @@
 .scene-preview.custom-scene{background-size:cover;background-position:center}
 .background-note{margin:10px 0 0}
 @media(max-width:900px){.background-options{grid-template-columns:repeat(4,minmax(0,1fr))}}@media(max-width:760px){.background-options{grid-template-columns:repeat(3,minmax(0,1fr))}.background-studio{padding:17px 12px}.background-custom-row{align-items:flex-start;flex-direction:column}.scene-preview{height:170px}.wallpaper{height:68px}}
+
+
+/* Tema neon: verde fluorescente escuro em destaque, laranja elétrico e preto */
+:root{
+  --bg:#080b09;
+  --panel:#101610;
+  --line:#263629;
+  --text:#f3fff4;
+  --muted:#a3b3a5;
+  --purple:#39d353;
+  --cyan:#ff7417;
+  --neon-green:#39ff14;
+  --deep-green:#1f9d35;
+  --neon-orange:#ff7417;
+}
+body{background:var(--bg)}
+.ambient-one{background:#1f9d35;opacity:.22}
+.ambient-two{background:#ff7417;opacity:.12}
+.brand b,.eyebrow,.step-number,.scene-preview-label{color:var(--neon-green)}
+.brand-mark{background:linear-gradient(135deg,#167b2b,#39ff14);color:#061006}
+.status,.pill{color:#aaff9f;border-color:#39ff1466}
+.status i{background:var(--neon-green)}
+.hero h1 span{background:linear-gradient(90deg,#1f9d35,#39ff14 65%,#ff7417);background-clip:text;color:transparent}
+.primary-link,.create-button,.account-button{background:linear-gradient(105deg,#176b29,#2dbb42 70%,#39ff14);color:#061006;box-shadow:0 8px 30px #39ff1426}
+.upload-card{border-color:#35543a}
+.upload-card:hover{border-color:var(--neon-green);background:#111d12}
+.upload-icon{color:var(--neon-green);background:#39ff1420}
+.choose-button{color:#c8ffc1}
+.consent input{accent-color:var(--neon-green)}
+.notice{background:#39ff1410;border-color:#39ff1433;color:#b6ffad}
+.account-button.secondary{background:#1a251c;border-color:#38523b;color:#eaffea}
+.credit-balance strong{color:var(--neon-green)}
+.background-option.selected{border-color:var(--neon-green);box-shadow:0 0 0 1px #39ff1455,0 0 16px #39ff1420}
+.background-upload{border-color:#39ff1466}
+.background-upload>span,.background-clear{color:var(--neon-orange)}
+.background-clear:hover{color:#ff9b5e}
+.background-option:hover{border-color:#ff741788}
+.scene-preview-label{color:var(--neon-green)}
+a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--neon-green);outline-offset:3px}
