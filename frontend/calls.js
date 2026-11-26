@@ -165,6 +165,26 @@
     catch (error) { setStatus("Não foi possível entrar: " + error.message); }
   });
   leaveButton.addEventListener("click", () => leave(true));
+  const fullscreenButton = $("toggleCallFullscreen");
+  const callSection = $("face-calls");
+  fullscreenButton?.addEventListener("click", async () => {
+    try {
+      if (!document.fullscreenElement) {
+        if (!callSection?.requestFullscreen) throw new Error("A tela cheia não é suportada neste navegador.");
+        await callSection.requestFullscreen();
+      } else {
+        await document.exitFullscreen();
+      }
+    } catch (error) {
+      setStatus("Não foi possível alterar a tela cheia: " + error.message);
+    }
+  });
+  document.addEventListener("fullscreenchange", () => {
+    if (!fullscreenButton) return;
+    const active = document.fullscreenElement === callSection;
+    fullscreenButton.textContent = active ? "⤢ Sair da tela cheia" : "⛶ Tela cheia";
+    fullscreenButton.setAttribute("aria-label", active ? "Sair da tela cheia" : "Abrir chamada em tela cheia");
+  });
   const invitedRoom = new URLSearchParams(location.search).get("room");
   if (invitedRoom) { roomInput.value = invitedRoom; setStatus("Convite recebido. Clique em Entrar na sala para aceitar câmera e microfone."); }
   window.addEventListener("beforeunload", () => {
