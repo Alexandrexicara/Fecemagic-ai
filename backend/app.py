@@ -20,7 +20,7 @@ from engine import engine
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("facemagic")
-app = FastAPI(title="FaceMagic AI API", version="0.3.0")
+app = FastAPI(title="FaceMagic AI API", version="0.4.0")
 origins = [x.strip() for x in os.getenv("ALLOWED_ORIGINS", "*").split(",") if x.strip()]
 app.add_middleware(
     CORSMiddleware,
@@ -32,7 +32,7 @@ app.add_middleware(
 MAX_BYTES = int(os.getenv("MAX_UPLOAD_MB", "12")) * 1024 * 1024
 MIME_TYPES = {"image/jpeg", "image/png", "image/webp"}
 JWT_ALGORITHM = "HS256"
-JWT_SECRET = os.getenv("JWT_SECRET", "")
+JWT_SECRET = os.getenv("JWT_SECRET", "").strip()
 JWT_HOURS = max(1, int(os.getenv("JWT_EXPIRE_HOURS", "24")))
 password_hasher = PasswordHasher()
 bearer = HTTPBearer(auto_error=False)
@@ -98,7 +98,7 @@ def current_user(credentials: HTTPAuthorizationCredentials = Depends(bearer)):
 
 @app.on_event("startup")
 def startup():
-    if os.getenv("DATABASE_URL"):
+    if os.getenv("DATABASE_URL", "").strip():
         try:
             initialize_database()
             logger.info("Schema PostgreSQL verificado.")
@@ -108,38 +108,50 @@ def startup():
 
 @app.get("/")
 def root():
-    return {"name": "FaceMagic AI API", "status": "online", "version": "0.3.0"}
+    return {"name": "FaceMagic AI API", "status": "online", "version": "0.4.0"}
 
 
 @app.get("/api/health")
 def health():
-    status = engine.status()
+    database_ready = db_ready()
+    engine_status = engine.status()
+    auth_ready = bool(JWT_SECRET)
     return {
         "ok": True,
         "service": "facemagic-api",
-        "version": "0.3.0",
-        "database": "connected" if db_ready() else "not_configured_or_unavailable",
-        "face_swap_engine": "ready" if status.configured else "not_configured",
+        "version": "0.4.0",
+        "database": "connected" if database_ready else (
+            "not_configured" if not os.getenv("DATABASE_URL", "").strip() else "unavailable"
+        ),
+        "database_configured": bool(os.getenv("DATABASE_URL", "").strip()),
+        "auth_configured": auth_ready,
+        "registration_enabled": database_ready and auth_ready,
+        "face_swap_engine": "ready" if engine_status.configured else "not_configured",
         "nvidia_api_configured": bool(os.getenv("NVIDIA_API_KEY", "").strip()),
     }
 
 
 @app.get("/api/capabilities")
 def capabilities():
-    status = engine.status()
     database = db_ready()
+    auth_ready = bool(JWT_SECRET)
+    engine_status = engine.status()
     return {
         "image_upload": True,
         "image_validation": True,
-        "image_face_swap": status.configured,
+        "image_face_swap": engine_status.configured,
+        "recorded_video_upload": True,
         "video_processing": False,
+        "live_camera_preview": True,
+        "live_face_swap": False,
         "virtual_camera": False,
-        "accounts": database and bool(JWT_SECRET),
-        "credits": database and bool(JWT_SECRET),
+        "accounts": database and auth_ready,
+        "credits": database and auth_ready,
         "database": database,
+        "auth_configured": auth_ready,
         "nvidia_api_configured": bool(os.getenv("NVIDIA_API_KEY", "").strip()),
         "video_backgrounds": "preview_only_until_video_pipeline_is_enabled",
-        "message": status.reason,
+        "message": engine_status.reason,
     }
 
 
@@ -267,14 +279,14 @@ async def validate_images(source_image: UploadFile = File(...), target_image: Up
         "ok": True,
         "source": {k: v for k, v in source.items() if k != "content"},
         "target": {k: v for k, v in target.items() if k != "content"},
-        "message": "As duas imagens passaram na validação. O motor de face swap ainda não está configurado.",
+        "message": "As duas imagens foram validadas. O motor de face swap ainda não está configurado.",
     }
 
 
 @app.post("/api/transform")
 async def transform_images(source_image: UploadFile = File(...), target_image: UploadFile = File(...)):
-    status = engine.status()
-    if not status.configured:
+    engine_status = engine.status()
+    if not engine_status.configured:
         raise HTTPException(status_code=503, detail="O motor de transformação ainda não foi aprovado e configurado.")
     source = await inspect_image(source_image)
     target = await inspect_image(target_image)
