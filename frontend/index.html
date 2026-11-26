@@ -108,7 +108,22 @@
       <div id="notice" class="notice" role="status" aria-live="polite">Selecione as duas imagens e confirme a autorização para validar os arquivos.</div>
     </section>
 
-    <section class="steps" id="como-funciona">
+
+    <section class="video-studio" id="face-calls">
+      <div class="background-heading"><div><span class="eyebrow">CHAMADAS FACE MAGIC</span><h3>Faça uma chamada por link</h3><p>Crie uma sala e compartilhe o link com outra pessoa. A chamada usa áudio e vídeo diretamente entre os navegadores; a transformação facial será conectada ao motor aprovado quando disponível.</p></div></div>
+      <div class="call-toolbar">
+        <button id="createCallRoom" class="account-button" type="button">Criar sala e copiar convite</button>
+        <label class="call-join-label">Código ou link da sala<input id="callRoomInput" type="text" placeholder="Cole o link ou código da sala"></label>
+        <button id="joinCallRoom" class="account-button secondary" type="button">Entrar na sala</button>
+        <button id="leaveCallRoom" class="account-button secondary" type="button" disabled>Encerrar chamada</button>
+      </div>
+      <div class="call-video-grid">
+        <div><span class="scene-preview-label">SUA CÂMERA</span><video id="callLocalVideo" class="video-preview" autoplay muted playsinline></video></div>
+        <div><span class="scene-preview-label">OUTRA PESSOA</span><video id="callRemoteVideo" class="video-preview" autoplay playsinline></video></div>
+      </div>
+      <p id="callStatus" class="video-status" role="status">Nenhuma chamada ativa. O navegador solicitará acesso à câmera e ao microfone ao entrar.</p>
+    </section>
+\n    <section class="steps" id="como-funciona">
       <div><span class="step-number">01</span><h3>Envie a foto e o destino</h3><p>Escolha o rosto e a imagem de referência.</p></div>
       <div><span class="step-number">02</span><h3>Escolha vídeo ou câmera</h3><p>Use um vídeo gravado ou abra a webcam para pré-visualização.</p></div>
       <div><span class="step-number">03</span><h3>Gere com IA</h3><p>O processamento será habilitado após a conexão e os testes do motor de face swap.</p></div>
