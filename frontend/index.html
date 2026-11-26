@@ -65,6 +65,27 @@
           <span class="choose-button">Selecionar referência</span>
         </label>
       </div>
+      <section class="background-studio" id="video-background">
+        <div class="background-heading">
+          <div><span class="eyebrow">CENÁRIOS DO VÍDEO</span><h3>Escolha o fundo da sua gravação</h3>
+          <p>Selecione um cenário pronto ou envie uma imagem sua. A prévia mostra o fundo escolhido; a aplicação no vídeo final depende da ativação do processamento de vídeo.</p></div>
+        </div>
+        <div class="background-options" role="group" aria-label="Papéis de parede">
+          <button type="button" class="background-option selected" data-background="original"><span class="wallpaper wallpaper-original"></span><b>Original</b></button>
+          <button type="button" class="background-option" data-background="office"><span class="wallpaper wallpaper-office"></span><b>Escritório</b></button>
+          <button type="button" class="background-option" data-background="beach"><span class="wallpaper wallpaper-beach"></span><b>Praia</b></button>
+          <button type="button" class="background-option" data-background="studio"><span class="wallpaper wallpaper-studio"></span><b>Estúdio</b></button>
+          <button type="button" class="background-option" data-background="city"><span class="wallpaper wallpaper-city"></span><b>Cidade</b></button>
+          <button type="button" class="background-option" data-background="library"><span class="wallpaper wallpaper-library"></span><b>Biblioteca</b></button>
+          <button type="button" class="background-option" data-background="nature"><span class="wallpaper wallpaper-nature"></span><b>Natureza</b></button>
+        </div>
+        <div class="background-custom-row">
+          <label class="background-upload" for="customBackground"><span>＋</span><strong>Enviar minha imagem de fundo</strong><small>JPG, PNG ou WebP · até 12 MB</small><input id="customBackground" type="file" accept="image/jpeg,image/png,image/webp"></label>
+          <button type="button" class="background-clear" id="clearBackground">Remover imagem personalizada</button>
+        </div>
+        <div class="scene-preview-wrap"><span class="scene-preview-label">PRÉVIA DO CENÁRIO SELECIONADO</span><div id="scenePreview" class="scene-preview wallpaper-original"><span>Prévia do fundo do vídeo</span></div></div>
+        <p class="background-note" id="backgroundStatus" role="status">Cenário original selecionado. A composição no vídeo final será habilitada junto com o motor de vídeo.</p>
+      </section>
       <div class="action-row">
         <label class="consent"><input id="consent" type="checkbox"> Confirmo que tenho autorização para usar as duas imagens e que não vou apresentar o resultado como registro autêntico de outra pessoa.</label>
         <button id="createButton" class="create-button" disabled>Preparar transformação <span>✦</span></button>
