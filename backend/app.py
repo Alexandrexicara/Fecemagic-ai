@@ -295,3 +295,79 @@ async def transform_images(source_image: UploadFile = File(...), target_image: U
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc))
     raise HTTPException(status_code=501, detail="A entrega segura do resultado ainda não está habilitada.")
+
+
+# Sinalização WebRTC para chamadas dentro da plataforma.
+# As salas são temporárias e ficam na memória do processo; nenhum áudio/vídeo é gravado.
+import asyncio
+from fastapi import WebSocket, WebSocketDisconnect
+from uuid import uuid4
+
+_call_rooms = {}
+_call_rooms_lock = asyncio.Lock()
+_CALL_ROOM_TTL_SECONDS = 6 * 60 * 60
+
+@app.post("/api/calls/rooms")
+async def create_call_room():
+    now = datetime.now(timezone.utc).timestamp()
+    async with _call_rooms_lock:
+        expired = [key for key, room in _call_rooms.items() if now - room["created_at"] > _CALL_ROOM_TTL_SECONDS and not room["clients"]]
+        for key in expired:
+            _call_rooms.pop(key, None)
+        room_id = secrets.token_urlsafe(18)
+        _call_rooms[room_id] = {"created_at": now, "clients": {}}
+    return {"room_id": room_id, "join_url": None, "expires_in_seconds": _CALL_ROOM_TTL_SECONDS}
+
+@app.websocket("/ws/calls/{room_id}")
+async def call_signaling(websocket: WebSocket, room_id: str):
+    await websocket.accept()
+    client_id = str(uuid4())
+    async with _call_rooms_lock:
+        room = _call_rooms.get(room_id)
+        if room is None or len(room["clients"]) >= 2:
+            await websocket.send_json({"type": "room-error", "message": "Sala inexistente ou cheia. Crie uma nova sala."})
+            await websocket.close(code=1008)
+            return
+        peers = list(room["clients"].keys())
+        room["clients"][client_id] = websocket
+    await websocket.send_json({"type": "joined", "client_id": client_id, "peers": peers})
+    for peer_id in peers:
+        try:
+            await room["clients"][peer_id].send_json({"type": "peer-joined", "peer_id": client_id})
+        except Exception:
+            pass
+    try:
+        while True:
+            message = await websocket.receive_json()
+            kind = message.get("type")
+            if kind not in {"offer", "answer", "ice-candidate", "hangup"}:
+                continue
+            target = message.get("to")
+            async with _call_rooms_lock:
+                current = _call_rooms.get(room_id, {}).get("clients", {})
+                destinations = [current[target]] if target in current else [ws for pid, ws in current.items() if pid != client_id]
+            payload = {"type": kind, "from": client_id, "payload": message.get("payload")}
+            for destination in destinations:
+                try:
+                    await destination.send_json(payload)
+                except Exception:
+                    pass
+            if kind == "hangup":
+                break
+    except WebSocketDisconnect:
+        pass
+    except Exception:
+        logger.exception("Erro na sinalização da chamada")
+    finally:
+        async with _call_rooms_lock:
+            room = _call_rooms.get(room_id)
+            if room:
+                room["clients"].pop(client_id, None)
+                remaining = list(room["clients"].values())
+            else:
+                remaining = []
+        for peer in remaining:
+            try:
+                await peer.send_json({"type": "peer-left", "peer_id": client_id})
+            except Exception:
+                pass
