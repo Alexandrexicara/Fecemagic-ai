@@ -81,6 +81,8 @@
             <h4>2. Câmera ao vivo</h4>
             <p>Ative sua webcam para conferir o enquadramento antes de iniciar o Live Swap.</p>
             <video id="liveCameraPreview" class="video-preview" autoplay muted playsinline hidden></video>
+            <canvas id="liveBackgroundCanvas" class="video-preview" hidden></canvas>
+            <button id="enableVirtualBackground" class="account-button secondary" type="button" disabled>Ativar fundo virtual</button>
             <div class="camera-actions"><button id="startCamera" class="account-button" type="button">Ligar câmera</button><button id="stopCamera" class="account-button secondary" type="button" disabled>Desligar</button></div>
             <p id="liveCameraStatus" class="video-status" role="status">A câmera permanece desligada até você autorizar.</p>
           </div>
@@ -133,6 +135,7 @@
   <script src="./config.js"></script>
   <script src="./app.js"></script>
   <script src="./account.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation@0.1.167/selfie_segmentation.js" crossorigin="anonymous"></script>
   <script src="./video.js"></script>\n  <script src="./calls.js"></script>
 </body>
 </html>
