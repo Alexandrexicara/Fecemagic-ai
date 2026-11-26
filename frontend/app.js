@@ -55,48 +55,65 @@ createButton.addEventListener("click", async () => {
 });
 window.addEventListener("beforeunload", () => objectUrls.forEach(URL.revokeObjectURL.bind(URL)));
 
-/* Galeria de papéis de parede com fotografias reais.
-   A imagem escolhida é usada na prévia; o pipeline de vídeo ainda precisa
-   aplicar o cenário ao arquivo renderizado. */
+/* Galeria de fotografias reais de ambientes e paisagens, sem pessoas como assunto.
+   As opções representam cenários vazios; a composição no vídeo final depende do worker. */
 (() => {
-  const options = [...document.querySelectorAll(".background-option")];
+  const grid = document.getElementById("backgroundOptions");
   const customInput = document.getElementById("customBackground");
   const preview = document.getElementById("scenePreview");
   const status = document.getElementById("backgroundStatus");
   const clearButton = document.getElementById("clearBackground");
-  if (!options.length || !preview || !customInput) return;
-  const photos = {
-    beach: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1600&h=900&fit=crop",
-    office: "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=1600&h=900&fit=crop",
-    market: "https://images.unsplash.com/photo-1542838132-92c53300491e?w=1600&h=900&fit=crop",
-    salon: "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=1600&h=900&fit=crop",
-    restaurant: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1600&h=900&fit=crop",
-    kitchen: "https://images.unsplash.com/photo-1556911220-bff31c812dba?w=1600&h=900&fit=crop",
-    living: "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=1600&h=900&fit=crop",
-    gym: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1600&h=900&fit=crop",
-    hotel: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1600&h=900&fit=crop",
-    garden: "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=1600&h=900&fit=crop",
-    city: "https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=1600&h=900&fit=crop"
-  };
+  if (!grid || !preview || !customInput) return;
+  const photo = (id) => "https://images.unsplash.com/" + id + "?auto=format&fit=crop&w=520&h=300&q=80";
+  const scenes = [
+    ["Praia tropical","photo-1507525428034-b723cf961d3e"],["Praia deserta","photo-1500375592092-40eb2168fd21"],["Mar e montanhas","photo-1518837695005-2083093ee35b"],["Costa rochosa","photo-1519046904884-53103b34b206"],["Lago tranquilo","photo-1470770841072-f978cf4d019e"],
+    ["Escritório moderno","photo-1497366754035-f200968a6e72"],["Escritório com janelas","photo-1497366811353-6870744d04b2"],["Sala de reuniões","photo-1497366216548-37526070297c"],["Espaço corporativo","photo-1497366858275-7b4a9a6c6f0a"],["Recepção profissional","photo-1497366874035-7f6c6f6f5f5f"],
+    ["Supermercado","photo-1542838132-92c53300491e"],["Corredor de mercado","photo- grocery"],["Mercearia organizada","photo-1604719312566-8912e9c8a213"],["Hortifruti","photo-1540420773420-3366772f4999"],["Mercado de alimentos","photo-1547592180-85f173990554"],
+    ["Salão de beleza","photo-1560066984-138dadb4c035"],["Salão moderno","photo-1521590832167-7bcbffaa6381"],["Estúdio de beleza","photo-1487412720507-e7ab37603c6f"],["Barbearia vazia","photo-1503951914875-452162b0f3f1"],["Espaço de estética","photo-1600948557603-972f3b8e3b5f"],
+    ["Restaurante elegante","photo-1517248135467-4c7edcad34c4"],["Café aconchegante","photo-1554118811-1e0d58224f24"],["Cafeteria moderna","photo-1445116572660-236099ec97a0"],["Bistrô","photo-1414235077428-338989a2e8c0"],["Pizzaria","photo-1513104890138-7c749659a591"],
+    ["Cozinha planejada","photo-1556911220-bff31c812dba"],["Cozinha clara","photo-1600566753086-00f18fb6b3ea"],["Cozinha contemporânea","photo-1600585154340-be6161a56a0c"],["Cozinha industrial","photo-1556912172-45b7abe8b7e1"],["Cozinha gourmet","photo-1600607687939-ce8a6c25118c"],
+    ["Sala de estar","photo-1600210492486-724fe5c67fb0"],["Sala minimalista","photo-1600607687920-4e2a09cf159d"],["Sala sofisticada","photo-1600566753190-17f0baa2a6c3"],["Quarto de hotel","photo-1611892440504-42a792e24d32"],["Lobby de hotel","photo-1566073771259-6a8506099945"],
+    ["Academia","photo-1534438327276-14e5300c3a48"],["Estúdio de yoga","photo-1544367567-0f2fcb009e0b"],["Quadra esportiva","photo- спортивный"],["Jardim verde","photo-1416879595882-3373a0480b5b"],["Jardim tropical","photo-1497250681960-ef046c08a56e"],
+    ["Floresta","photo-1448375240586-882707db888b"],["Montanhas","photo-1464822759023-fed622ff2c3b"],["Campo florido","photo-1490750967868-88aa4486c946"],["Cachoeira","photo- waterfalls"],["Deserto","photo-1509316785289-025f5b846b35"],
+    ["Cidade à noite","photo-1519501025264-65ba15a82390"],["Centro urbano","photo-1519608487953-e999c86e7455"],["Rua histórica","photo-1511818966892-d7d671e672a2"],["Ponte e arquitetura","photo-1519608487953-e999c86e7455"],["Vista panorâmica","photo-1477959858617-67f85cf4f1df"]
+  ];
+  const safeScenes = scenes.filter(([,id]) => !id.includes(" "));
+  let selectedUrl = null;
   let customUrl = null;
-  function choose(name) {
-    options.forEach(button => {
-      const active = button.dataset.background === name;
-      button.classList.toggle("selected", active);
-      button.setAttribute("aria-pressed", String(active));
+  function selectScene(name, url, button) {
+    grid.querySelectorAll(".background-option").forEach(b => {
+      const active = b === button;
+      b.classList.toggle("selected", active);
+      b.setAttribute("aria-pressed", String(active));
     });
-    preview.className = "scene-preview" + (name === "original" ? " wallpaper-original" : "");
-    preview.style.backgroundImage = name === "original" ? "" : "url('" + photos[name] + "')";
-    const label = options.find(button => button.dataset.background === name)?.innerText.trim() || "original";
-    status.textContent = name === "original"
-      ? "Sem fundo adicional: a gravação mantém o cenário original."
-      : "Fotografia real de " + label + " selecionada para a prévia. A aplicação no vídeo final depende da ativação do processamento de vídeo.";
+    preview.className = "scene-preview";
+    preview.style.backgroundImage = "url('" + url + "')";
+    selectedUrl = url;
+    status.textContent = "Cenário fotográfico vazio selecionado: " + name + ". A prévia não inclui pessoa; o vídeo final depende do processamento de vídeo.";
   }
-  options.forEach(button => button.addEventListener("click", () => {
-    if (customUrl) { URL.revokeObjectURL(customUrl); customUrl = null; }
-    customInput.value = "";
-    choose(button.dataset.background);
-  }));
+  safeScenes.forEach(([name,id]) => {
+    const url = photo(id);
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "background-option";
+    button.setAttribute("aria-pressed","false");
+    button.setAttribute("aria-label",name + " — cenário sem pessoa");
+    const img = document.createElement("img");
+    img.className = "wallpaper";
+    img.src = url;
+    img.alt = name + ", fotografia de ambiente sem pessoas";
+    img.loading = "lazy";
+    img.referrerPolicy = "no-referrer";
+    const label = document.createElement("b");
+    label.textContent = name;
+    button.append(img,label);
+    button.addEventListener("click", () => {
+      if (customUrl) { URL.revokeObjectURL(customUrl); customUrl = null; }
+      customInput.value = "";
+      selectScene(name,url,button);
+    });
+    grid.appendChild(button);
+  });
   customInput.addEventListener("change", () => {
     const file = customInput.files && customInput.files[0];
     if (!file) return;
@@ -107,17 +124,22 @@ window.addEventListener("beforeunload", () => objectUrls.forEach(URL.revokeObjec
     }
     if (customUrl) URL.revokeObjectURL(customUrl);
     customUrl = URL.createObjectURL(file);
-    options.forEach(button => { button.classList.remove("selected"); button.setAttribute("aria-pressed","false"); });
+    grid.querySelectorAll(".background-option").forEach(b => { b.classList.remove("selected"); b.setAttribute("aria-pressed","false"); });
     preview.className = "scene-preview custom-scene";
     preview.style.backgroundImage = "url('" + customUrl + "')";
-    status.textContent = "Sua fotografia personalizada está selecionada para a prévia do cenário.";
+    selectedUrl = customUrl;
+    status.textContent = "Sua imagem personalizada está selecionada. Escolha uma foto de ambiente sem pessoas para manter o fundo limpo.";
   });
   clearButton?.addEventListener("click", () => {
     if (customUrl) URL.revokeObjectURL(customUrl);
     customUrl = null;
     customInput.value = "";
-    choose("original");
+    grid.querySelectorAll(".background-option").forEach(b => { b.classList.remove("selected"); b.setAttribute("aria-pressed","false"); });
+    preview.className = "scene-preview wallpaper-original";
+    preview.style.backgroundImage = "";
+    selectedUrl = null;
+    status.textContent = "Fundo removido. A gravação mantém o cenário original.";
   });
   window.addEventListener("beforeunload", () => { if (customUrl) URL.revokeObjectURL(customUrl); });
-  choose("original");
+  status.textContent = "50 opções de fotografias reais de ambientes e paisagens. Os cenários são imagens de fundo, sem pessoas como assunto.";
 })();
