@@ -64,10 +64,10 @@ window.addEventListener("beforeunload", () => objectUrls.forEach(URL.revokeObjec
   const status = document.getElementById("backgroundStatus");
   const clearButton = document.getElementById("clearBackground");
   if (!grid || !preview || !customInput) return;
-  const photo = (id) => "https://images.unsplash.com/" + id + "?auto=format&fit=crop&w=520&h=300&q=80";
+  const photo = (id, width = 1920, height = 1080, quality = 90) => "https://images.unsplash.com/" + id + "?auto=format&fit=crop&crop=entropy&w=" + width + "&h=" + height + "&q=" + quality;
   const scenes = [
     ["Praia tropical","photo-1507525428034-b723cf961d3e"],["Praia deserta","photo-1500375592092-40eb2168fd21"],["Mar e montanhas","photo-1518837695005-2083093ee35b"],["Costa rochosa","photo-1519046904884-53103b34b206"],["Lago tranquilo","photo-1470770841072-f978cf4d019e"],
-    ["Escritório moderno","photo-1497366754035-f200968a6e72"],["Escritório com janelas","photo-1497366811353-6870744d04b2"],["Sala de reuniões","photo-1497366216548-37526070297c"],["Espaço corporativo","photo-1497366858275-7b4a9a6c6f0a"],["Recepção profissional","photo-1497366874035-7f6c6f6f5f5f"],
+    ["Escritório moderno","photo-1497366754035-f200968a6e72"],["Escritório com janelas","photo-1497366811353-6870744d04b2"],["Sala de reuniões","photo-1497366216548-37526070297c"],["Espaço corporativo","photo-1497366811353-6870744d04b2"],["Recepção profissional","photo-1497366216548-37526070297c"],
     ["Supermercado","photo-1542838132-92c53300491e"],["Corredor de mercado","photo-1604719312566-8912e9c8a213"],["Mercearia organizada","photo-1604719312566-8912e9c8a213"],["Hortifruti","photo-1540420773420-3366772f4999"],["Mercado de alimentos","photo-1547592180-85f173990554"],
     ["Salão de beleza","photo-1560066984-138dadb4c035"],["Salão moderno","photo-1521590832167-7bcbffaa6381"],["Estúdio de beleza","photo-1560066984-138dadb4c035"],["Barbearia vazia","photo-1503951914875-452162b0f3f1"],["Espaço de estética","photo-1600948557603-972f3b8e3b5f"],
     ["Restaurante elegante","photo-1517248135467-4c7edcad34c4"],["Café aconchegante","photo-1554118811-1e0d58224f24"],["Cafeteria moderna","photo-1445116572660-236099ec97a0"],["Bistrô","photo-1414235077428-338989a2e8c0"],["Pizzaria","photo-1513104890138-7c749659a591"],
@@ -92,7 +92,8 @@ window.addEventListener("beforeunload", () => objectUrls.forEach(URL.revokeObjec
     status.textContent = "Cenário fotográfico vazio selecionado: " + name + ". A prévia não inclui pessoa; o vídeo final depende do processamento de vídeo.";
   }
   safeScenes.forEach(([name,id]) => {
-    const url = photo(id);
+    const url = photo(id, 1920, 1080, 90);
+    const thumbnailUrl = photo(id, 640, 400, 85);
     const button = document.createElement("button");
     button.type = "button";
     button.className = "background-option";
@@ -100,10 +101,16 @@ window.addEventListener("beforeunload", () => objectUrls.forEach(URL.revokeObjec
     button.setAttribute("aria-label",name + " — cenário sem pessoa");
     const img = document.createElement("img");
     img.className = "wallpaper";
-    img.src = url;
-    img.alt = name + ", fotografia de ambiente sem pessoas";
+    img.src = thumbnailUrl;
+    img.alt = name + ", fotografia de ambiente";
     img.loading = "lazy";
     img.referrerPolicy = "no-referrer";
+    img.addEventListener("error", () => {
+      button.classList.add("image-unavailable");
+      button.disabled = true;
+      label.textContent = name + " — foto indisponível";
+      img.alt = "Fotografia indisponível";
+    }, { once: true });
     const label = document.createElement("b");
     label.textContent = name;
     button.append(img,label);
