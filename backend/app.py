@@ -542,6 +542,20 @@ async def create_call_room(user=Depends(current_user)):
 
 @app.websocket("/ws/calls/{room_id}")
 async def call_signaling(websocket: WebSocket, room_id: str):
+    require_auth_config()
+    token = websocket.query_params.get("token", "")
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        user_id = payload.get("sub")
+        with get_connection() as conn:
+            authorized = conn.execute(
+                "SELECT approval_status FROM users WHERE id=%s", (user_id,)
+            ).fetchone()
+        if not authorized or authorized["approval_status"] != "approved":
+            raise ValueError("account not approved")
+    except Exception:
+        await websocket.close(code=1008)
+        return
     await websocket.accept()
     client_id = str(uuid4())
     async with _call_rooms_lock:
