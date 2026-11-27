@@ -36,7 +36,7 @@ consent.addEventListener("change", updateButton);
 createButton.addEventListener("click", async () => {
   if (!sourceInput.files?.[0] || !targetInput.files?.[0] || !consent.checked) return;
   if (!API_BASE_URL) {
-    notice.textContent = "As imagens foram selecionadas. O motor de transformação ainda não foi ativado: estamos validando um modelo gratuito com licença comercial adequada. Nenhuma API paga será chamada.";
+    notice.textContent = "Suas imagens foram selecionadas.";
     return;
   }
   const sessionToken = sessionStorage.getItem("facemagic_session_token") || "";
@@ -53,9 +53,9 @@ createButton.addEventListener("click", async () => {
     const response = await fetch(API_BASE_URL.replace(/\/$/, "") + "/api/validate", { method: "POST", body, headers: {"Authorization":"Bearer " + sessionToken} });
     const data = await response.json();
     if (!response.ok) throw new Error(data.detail || "Não foi possível validar as imagens.");
-    notice.textContent = "Arquivos validados. " + data.message;
+    notice.textContent = "Tudo certo! Seus arquivos foram recebidos.";
   } catch (error) {
-    notice.textContent = "Não foi possível conectar ao servidor: " + error.message;
+    notice.textContent = "Não foi possível concluir agora. Tente novamente mais tarde.";
   } finally { updateButton(); }
 });
 window.addEventListener("beforeunload", () => objectUrls.forEach(URL.revokeObjectURL.bind(URL)));
