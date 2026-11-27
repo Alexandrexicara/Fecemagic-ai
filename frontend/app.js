@@ -58,7 +58,8 @@ createButton.addEventListener("click", async () => {
     let result = null;
     for (let attempt = 0; attempt < 120; attempt++) {
       await new Promise(resolve => setTimeout(resolve, 2500));
-      const statusResponse = await fetch(API_BASE_URL.replace(/\/$/, "") + "/api/engine/jobs/" + encodeURIComponent(data.job_id), { headers: {"Authorization":"Bearer " + sessionToken} });
+      const statusEndpoint = API_BASE_URL.replace(/\/$/, "") + "/api/engine/jobs/" + encodeURIComponent(data.job_id) + (data.status_url ? "?status_url=" + encodeURIComponent(data.status_url) : "");
+      const statusResponse = await fetch(statusEndpoint, { headers: {"Authorization":"Bearer " + sessionToken} });
       const statusData = await statusResponse.json();
       if (!statusResponse.ok) throw new Error(statusData.detail || "Não foi possível consultar o processamento.");
       if (statusData.status === "succeeded" && statusData.output_url) { result = statusData; break; }
