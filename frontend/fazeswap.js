@@ -141,8 +141,8 @@
   async function stopLiveSwap() {
     const session = pending;
     pending = null;
-    if (swap?.stream) transformação.stream.getTracks().forEach(track => track.stop());
-    transformação = null;
+    if (swap?.stream) swap.stream.getTracks().forEach(track => track.stop());
+    swap = null;
     if (outputStream) outputStream.getVideoTracks().forEach(track => track.stop());
     outputStream = null;
     if (livePreview) { livePreview.pause(); livePreview.srcObject = null; livePreview.hidden = true; }
