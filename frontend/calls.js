@@ -32,6 +32,13 @@
   }
   async function ensureMedia() {
     if (stream) return stream;
+    const transformed = window.FaceMagicLiveSwap?.getStream?.();
+    if (transformed) {
+      stream = transformed;
+      localVideo.srcObject = stream;
+      await localVideo.play().catch(() => {});
+      return stream;
+    }
     if (!navigator.mediaDevices?.getUserMedia) throw new Error("Permita o acesso à câmera e ao microfone para continuar.");
     stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
     localVideo.srcObject = stream;
@@ -131,7 +138,11 @@
     send("hangup", null);
     if (socket) { socket.onclose = null; socket.close(); socket = null; }
     if (peer) { peer.close(); peer = null; }
-    if (stream) { stream.getTracks().forEach(track => track.stop()); stream = null; }
+    if (stream) {
+      const transformed = window.FaceMagicLiveSwap?.getStream?.();
+      if (stream !== transformed) stream.getTracks().forEach(track => track.stop());
+      stream = null;
+    }
     localVideo.srcObject = null;
     remoteVideo.srcObject = null;
     roomId = null;
@@ -189,7 +200,10 @@
   const invitedRoom = new URLSearchParams(location.search).get("room");
   if (invitedRoom) { roomInput.value = invitedRoom; setStatus("Convite recebido. Clique em Entrar na sala para aceitar câmera e microfone."); }
   window.addEventListener("beforeunload", () => {
-    if (stream) stream.getTracks().forEach(track => track.stop());
+    if (stream) {
+      const transformed = window.FaceMagicLiveSwap?.getStream?.();
+      if (stream !== transformed) stream.getTracks().forEach(track => track.stop());
+    }
     if (socket) socket.close();
     if (peer) peer.close();
   });
