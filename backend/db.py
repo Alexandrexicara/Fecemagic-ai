@@ -10,6 +10,11 @@ CREATE TABLE IF NOT EXISTS users (
     email TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
     display_name TEXT,
+    approval_status TEXT NOT NULL DEFAULT 'pending' CHECK (approval_status IN ('pending','approved','rejected')),
+    payment_status TEXT NOT NULL DEFAULT 'unpaid' CHECK (payment_status IN ('unpaid','pending','paid','manual_comped')),
+    payment_method TEXT CHECK (payment_method IN ('pix','sumup_card')),
+    approved_at TIMESTAMPTZ,
+    approved_by TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -48,6 +53,23 @@ CREATE TABLE IF NOT EXISTS consent_records (
     policy_version TEXT NOT NULL,
     accepted_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+ALTER TABLE users ADD COLUMN IF NOT EXISTS approval_status TEXT NOT NULL DEFAULT 'pending';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS payment_status TEXT NOT NULL DEFAULT 'unpaid';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS payment_method TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS approved_at TIMESTAMPTZ;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS approved_by TEXT;
+CREATE TABLE IF NOT EXISTS payment_requests (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    method TEXT NOT NULL CHECK (method IN ('pix','sumup_card')),
+    status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','paid','rejected')),
+    proof_reference TEXT,
+    provider_reference TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_payment_requests_user_created ON payment_requests(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_users_approval_payment ON users(approval_status, payment_status, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_jobs_user_created ON transformation_jobs(user_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_ledger_user_created ON credit_ledger(user_id, created_at DESC);
 """
