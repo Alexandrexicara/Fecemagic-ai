@@ -18,9 +18,14 @@ MAX_IMAGE_BYTES = 12 * 1024 * 1024
 MAX_VIDEO_BYTES = 500 * 1024 * 1024
 
 def _api_key():
-    key = os.getenv("FAZESWAP_API_KEY", "").strip()
+    # Aceita tanto o valor puro quanto o cabeçalho completo colado por engano no Render.
+    key = (os.getenv("FAZESWAP_API_KEY") or "").strip().strip('"').strip("'")
+    if key.lower().startswith("bearer "):
+        key = key[7:].strip()
     if not key:
-        raise HTTPException(status_code=503, detail="O mecanismo de transformação ainda não está configurado no servidor.")
+        raise HTTPException(status_code=503, detail="A credencial privada do processamento não está configurada no servidor.")
+    if any(ch.isspace() for ch in key):
+        raise HTTPException(status_code=503, detail="A credencial privada está em formato inválido. Configure somente o valor da chave, sem espaços ou prefixos.")
     return key
 
 def _provider_error(status, body):
@@ -32,8 +37,12 @@ def _provider_error(status, body):
     nested_code = error_value.get("code") if isinstance(error_value, dict) else (error_value if isinstance(error_value, str) else "")
     code = str(data.get("code") or nested_code or "")
     if status == 401 or code == "unauthorized":
-        logger.warning("Engine rejected configured credential: upstream_status=%s code=%s", status, code or "unauthorized")
-        return HTTPException(status_code=401, detail="A credencial do mecanismo de IA não foi aceita. Verifique a configuração privada do servidor.")
+        raw_key = (os.getenv("FAZESWAP_API_KEY") or "").strip()
+        prefix = raw_key.removeprefix("Bearer ").split("_", 2)[0:2]
+        safe_prefix = "_".join(prefix)[:24] if prefix else "empty"
+        logger.error("Upstream credential rejected: status=%s code=%s configured_prefix=%s", status, code or "unauthorized", safe_prefix)
+        # 502 deixa claro que o 401 veio do provedor, não do login do FaceMagic.
+        return HTTPException(status_code=502, detail="O serviço de processamento recusou a chave configurada no servidor. A autenticação da conta FaceMagic não é o problema.")
     if status == 402 or code == "insufficient_balance":
         logger.warning("Engine balance insufficient: upstream_status=%s code=%s", status, code or "insufficient_balance")
         return HTTPException(status_code=402, detail="Saldo de processamento insuficiente. Consulte o painel administrativo antes de continuar.")
@@ -114,6 +123,23 @@ def create_fazeswap_router(current_user, require_approved):
         require_approved(user)
         return {"ok": True, "balance": _request("GET", "/balance"), "pricing": _request("GET", "/pricing", auth=False)}
 
+    @router.get("/diagnostics")
+    def diagnostics(user=Depends(current_user)):
+        require_approved(user)
+        raw_key = (os.getenv("FAZESWAP_API_KEY") or "").strip()
+        key = raw_key.removeprefix("Bearer ").strip().strip('"').strip("'")
+        if not key:
+            return {"ok": False, "credential_configured": False, "authenticated": False, "reason": "missing_credential"}
+        if any(ch.isspace() for ch in key):
+            return {"ok": False, "credential_configured": True, "authenticated": False, "reason": "malformed_credential"}
+        try:
+            balance = _request("GET", "/balance")
+            return {"ok": True, "credential_configured": True, "authenticated": True, "balance_available": isinstance(balance, dict)}
+        except HTTPException as exc:
+            if exc.status_code == 502 and "recusou a chave" in str(exc.detail):
+                return {"ok": False, "credential_configured": True, "authenticated": False, "reason": "provider_rejected_credential"}
+            raise
+
     @router.post("/image")
     def swap_image(source_image: UploadFile = File(...), target_image: UploadFile = File(...), user=Depends(current_user)):
         require_approved(user)
@@ -128,7 +154,7 @@ def create_fazeswap_router(current_user, require_approved):
         face = _upload(face_image, IMAGE_TYPES, MAX_IMAGE_BYTES)
         video = _upload(recorded_video, VIDEO_TYPES, MAX_VIDEO_BYTES)
         job = _request("POST", "/face-swap", {"video_key": video["file_key"], "face_key": face["file_key"], "output_resolution_p": 720})
-        return {"ok": True, "job_id": job.get("id"), "status": job.get("status", "queued")}
+        return {"ok": True, "job_id": job.get("id"), "status": job.get("status", "queued"), "status_url": job.get("status_url")}
 
     @router.get("/jobs/{job_id}")
     def job_status(job_id: str, status_url: str = None, user=Depends(current_user)):
