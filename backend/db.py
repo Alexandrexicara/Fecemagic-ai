@@ -19,19 +19,6 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-CREATE TABLE IF NOT EXISTS credit_accounts (
-    user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-    balance INTEGER NOT NULL DEFAULT 0 CHECK (balance >= 0),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-CREATE TABLE IF NOT EXISTS credit_ledger (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    amount INTEGER NOT NULL CHECK (amount <> 0),
-    reason TEXT NOT NULL,
-    reference_id UUID,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
 CREATE TABLE IF NOT EXISTS transformation_jobs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES users(id) ON DELETE SET NULL,
@@ -73,7 +60,8 @@ CREATE TABLE IF NOT EXISTS payment_requests (
 CREATE INDEX IF NOT EXISTS idx_payment_requests_user_created ON payment_requests(user_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_users_approval_payment ON users(approval_status, payment_status, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_jobs_user_created ON transformation_jobs(user_id, created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_ledger_user_created ON credit_ledger(user_id, created_at DESC);
+DROP TABLE IF EXISTS credit_ledger;
+DROP TABLE IF EXISTS credit_accounts;
 """
 
 @contextmanager
