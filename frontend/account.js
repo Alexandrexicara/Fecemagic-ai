@@ -59,7 +59,14 @@
       updateAccess(approved);
       document.getElementById("accountToggle").textContent = approved ? "Minha conta" : "Conta / Pagamento";
       payPanel.hidden = approved && !isAdmin;
-      if (!approved || isAdmin) await loadPaymentOptions();
+      if (!approved || isAdmin) {
+        try { await loadPaymentOptions(); }
+        catch (paymentError) {
+          payInfo.textContent = "Valor da plataforma: R$ 4.000,00 (pagamento único). As opções de pagamento serão carregadas em instantes.";
+          pixButton.disabled = true;
+          sumupButton.disabled = true;
+        }
+      }
       if (isAdmin) setStatus("Conta administrativa liberada. Você também pode visualizar e testar as formas de pagamento.");
       else if (approved) setStatus("Compra confirmada. Seu acesso à plataforma está liberado.");
       else setStatus("Cadastro recebido. Escolha Pix ou cartão para concluir a compra e liberar o acesso.");
