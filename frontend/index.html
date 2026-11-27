@@ -43,7 +43,9 @@
       <div id="accountStatus" class="notice" role="status" aria-live="polite">Consultando o estado do banco Neon e da autenticação…</div>
       <div id="paymentOptions" class="payment-options" hidden>
         <h3>Escolha como deseja pagar</h3>
-        <p>Pix: envie o comprovante ao responsável e aguarde a confirmação manual. Cartão: pagamento pelo SumUp; a confirmação será automática quando o checkout/webhook estiver conectado.</p>
+        <p>Pix: faça o pagamento e envie o comprovante ao responsável. O Pix será confirmado manualmente. Cartão: pague pelo checkout seguro SumUp; a confirmação será automática após a verificação do SumUp.</p>
+        <p id="paymentInfo" class="video-status" role="status">Consultando valor e chave Pix…</p>
+        <label class="call-join-label">Referência ou link do comprovante Pix (opcional)<input id="pixProofReference" type="text" maxlength="1000" placeholder="Cole uma referência ou link do comprovante"></label>
         <div class="camera-actions"><button id="payPix" class="account-button" type="button">Pagar com Pix</button><button id="paySumUp" class="account-button secondary" type="button">Cartão pelo SumUp</button></div>
       </div>
       <div id="accountDashboard" class="account-dashboard" hidden>
