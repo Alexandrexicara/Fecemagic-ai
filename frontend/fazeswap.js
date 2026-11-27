@@ -158,7 +158,7 @@
       try { await request("/api/engine/live-session/" + encodeURIComponent(session.session_id) + "/stop", { method: "POST" }); } catch {}
     }
     if (liveStatus) liveStatus.textContent = "A transformação ao vivo foi encerrada. A câmera original continua disponível.";
-    window.dispatchEvent(new Event("facemagic-live-transformação-changed"));
+    window.dispatchEvent(new Event("facemagic-live-swap-changed"));
   }
   stopButton?.addEventListener("click", stopLiveSwap);
 })();
