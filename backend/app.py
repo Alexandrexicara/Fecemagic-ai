@@ -37,6 +37,7 @@ MIME_TYPES = {"image/jpeg", "image/png", "image/webp"}
 JWT_ALGORITHM = "HS256"
 JWT_SECRET = os.getenv("JWT_SECRET", "").strip()
 JWT_HOURS = max(1, int(os.getenv("JWT_EXPIRE_HOURS", "24")))
+ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "santossilvac992@gmail.com").strip().lower()
 password_hasher = PasswordHasher()
 bearer = HTTPBearer(auto_error=False)
 
@@ -76,6 +77,17 @@ def require_auth_config():
         raise HTTPException(status_code=503, detail="Autenticação ainda não configurada no servidor (JWT_SECRET).")
 
 
+def require_approved(user):
+    if user.get("approval_status") != "approved":
+        raise HTTPException(status_code=403, detail="Seu acesso está aguardando liberação.")
+
+
+def admin_authorized(x_admin_key):
+    admin_key = os.getenv("ADMIN_API_KEY", "").strip()
+    if not admin_key or not x_admin_key or not secrets.compare_digest(admin_key, x_admin_key):
+        raise HTTPException(status_code=403, detail="Ação administrativa não autorizada.")
+
+
 def create_token(user_id: str, email: str) -> str:
     now = datetime.now(timezone.utc)
     return jwt.encode(
@@ -99,7 +111,7 @@ def current_user(credentials: HTTPAuthorizationCredentials = Depends(bearer)):
     try:
         with get_connection() as conn:
             row = conn.execute(
-                "SELECT id::text AS id, email, display_name, created_at, approval_status, payment_status, payment_method FROM users WHERE id = %s",
+                "SELECT id::text AS id, email, display_name, role, created_at, approval_status, payment_status, payment_method FROM users WHERE id = %s",
                 (user_id,),
             ).fetchone()
     except Exception:
@@ -182,14 +194,17 @@ def register(data: Credentials):
             exists = conn.execute("SELECT 1 FROM users WHERE email = %s", (email,)).fetchone()
             if exists:
                 raise HTTPException(status_code=409, detail="Este e-mail já possui cadastro.")
+            is_admin = email == ADMIN_EMAIL
             row = conn.execute(
-                """INSERT INTO users (email, password_hash, display_name, approval_status, payment_status)
-                   VALUES (%s, %s, %s, 'pending', 'unpaid')
-                   RETURNING id::text AS id, email, display_name, created_at, approval_status, payment_status""",
-                (email, password_hasher.hash(data.password), (data.display_name or "").strip() or None),
+                """INSERT INTO users (email, password_hash, display_name, role, approval_status, payment_status, approved_at, approved_by)
+                   VALUES (%s, %s, %s, %s, %s, %s, CASE WHEN %s THEN now() ELSE NULL END, CASE WHEN %s THEN 'system_admin_email' ELSE NULL END)
+                   RETURNING id::text AS id, email, display_name, role, created_at, approval_status, payment_status""",
+                (email, password_hasher.hash(data.password), (data.display_name or "").strip() or None,
+                 "admin" if is_admin else "user", "approved" if is_admin else "pending",
+                 "manual_comped" if is_admin else "unpaid", is_admin, is_admin),
             ).fetchone()
             conn.execute("INSERT INTO credit_accounts (user_id, balance) VALUES (%s, 0)", (row["id"],))
-        return {"ok": True, "status": "pending_approval", "access_token": create_token(row["id"], row["email"]), "token_type": "bearer", "user": row, "message": "Cadastro recebido. Escolha a forma de pagamento e aguarde a aprovação do acesso."}
+        return {"ok": True, "status": "approved" if is_admin else "pending_approval", "access_token": create_token(row["id"], row["email"]), "token_type": "bearer", "user": row, "message": "Conta administrativa liberada." if is_admin else "Cadastro recebido. Escolha a forma de pagamento e aguarde a aprovação do acesso."}
     except HTTPException:
         raise
     except Exception:
@@ -204,7 +219,7 @@ def login(data: Credentials):
     try:
         with get_connection() as conn:
             row = conn.execute(
-                "SELECT id::text AS id, email, display_name, password_hash, created_at, approval_status, payment_status, payment_method FROM users WHERE email = %s",
+                "SELECT id::text AS id, email, display_name, role, password_hash, created_at, approval_status, payment_status, payment_method FROM users WHERE email = %s",
                 (email,),
             ).fetchone()
         if not row:
@@ -213,9 +228,15 @@ def login(data: Credentials):
             password_hasher.verify(row["password_hash"], data.password)
         except (VerifyMismatchError, InvalidHashError):
             raise HTTPException(status_code=401, detail="E-mail ou senha incorretos.")
+        if row["email"].lower() == ADMIN_EMAIL and row["role"] != "admin":
+            with get_connection() as conn:
+                conn.execute("""UPDATE users SET role='admin', approval_status='approved',
+                    payment_status='manual_comped', approved_at=COALESCE(approved_at, now()),
+                    approved_by='system_admin_email', updated_at=now() WHERE id=%s""", (row["id"],))
+            row["role"], row["approval_status"], row["payment_status"] = "admin", "approved", "manual_comped"
         if row["approval_status"] == "rejected":
             raise HTTPException(status_code=403, detail="Seu cadastro não foi aprovado. Entre em contato com o suporte.")
-        user = {k: row[k] for k in ("id", "email", "display_name", "created_at", "approval_status", "payment_status", "payment_method")}
+        user = {k: row[k] for k in ("id", "email", "display_name", "role", "created_at", "approval_status", "payment_status", "payment_method")}
         return {"access_token": create_token(row["id"], row["email"]), "token_type": "bearer", "user": user}
     except HTTPException:
         raise
@@ -306,7 +327,7 @@ def select_payment(data: PaymentChoice, user=Depends(current_user)):
 
 
 def payment_amount():
-    raw = (os.getenv("FACEMAGIC_PRICE_BRL") or os.getenv("SUMUP_AMOUNT_BRL") or "").strip()
+    raw = (os.getenv("FACEMAGIC_PRICE_BRL") or os.getenv("SUMUP_AMOUNT_BRL") or "4000.00").strip()
     try:
         amount = float(raw.replace(",", "."))
         return amount if amount > 0 else None
