@@ -148,7 +148,8 @@ def health():
         "registration_enabled": database_ready and auth_ready,
         "approval_required": True,
         "payment_methods": ["pix", "sumup_card"],
-        "face_swap_engine": "ready" if engine_status.configured else "not_configured",
+        "face_swap_engine": "fazeswap_api_configured" if os.getenv("FAZESWAP_API_KEY", "").strip() else ("ready" if engine_status.configured else "not_configured"),
+        "fazeswap_api_configured": bool(os.getenv("FAZESWAP_API_KEY", "").strip()),
         "nvidia_api_configured": bool(os.getenv("NVIDIA_API_KEY", "").strip()),
     }
 
@@ -161,13 +162,14 @@ def capabilities():
     return {
         "image_upload": True,
         "image_validation": True,
-        "image_face_swap": engine_status.configured,
+        "image_face_swap": bool(os.getenv("FAZESWAP_API_KEY", "").strip()) or engine_status.configured,
         "recorded_video_upload": True,
-        "video_processing": False,
+        "video_processing": bool(os.getenv("FAZESWAP_API_KEY", "").strip()),
         "in_platform_calls": True,
         "call_signaling": "websocket_ephemeral_single_instance",
         "live_camera_preview": True,
-        "live_face_swap": False,
+        "live_face_swap": bool(os.getenv("FAZESWAP_API_KEY", "").strip()),
+        "fazeswap_api_configured": bool(os.getenv("FAZESWAP_API_KEY", "").strip()),
         "virtual_camera": False,
         "accounts": database and auth_ready,
         "database": database,
