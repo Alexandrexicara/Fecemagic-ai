@@ -34,10 +34,11 @@
     return data;
   }
 
-  async function pollJob(id, statusElement) {
+  async function pollJob(job, statusElement) {
     for (let i = 0; i < 180; i++) {
       await new Promise(resolve => setTimeout(resolve, 2500));
-      const data = await request("/api/engine/jobs/" + encodeURIComponent(id));
+      const endpoint = "/api/engine/jobs/" + encodeURIComponent(job.job_id) + (job.status_url ? "?status_url=" + encodeURIComponent(job.status_url) : "");
+      const data = await request(endpoint);
       if (data.status === "succeeded" && data.output_url) return data;
       if (data.status === "failed") throw new Error(data.error?.message || "O mecanismo não conseguiu processar o arquivo.");
       if (statusElement) statusElement.textContent = "Processando seu arquivo… " + (i + 1);
@@ -64,7 +65,7 @@
       form.append("face_image", face);
       const started = await request("/api/engine/video", { method: "POST", body: form });
       if (!started.job_id) throw new Error("O mecanismo não retornou o ID do processamento.");
-      const result = await pollJob(started.job_id, videoStatus);
+      const result = await pollJob(started, videoStatus);
       if (videoResult) { videoResult.src = result.output_url; videoResult.hidden = false; }
       if (videoDownload) { videoDownload.href = result.output_url; videoDownload.hidden = false; }
       if (videoStatus) videoStatus.textContent = "Vídeo transformado. Custo do processamento: US$ " + Number(result.charged_usd || 0).toFixed(4) + ".";
