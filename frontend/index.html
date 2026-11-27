@@ -98,6 +98,11 @@
           <span class="choose-button">Selecionar referência</span>
         </label>
       </div>
+      <div id="imageSwapResult" class="fazeswap-result" hidden>
+        <h3>Imagem transformada</h3>
+        <img id="imageSwapOutput" alt="Resultado da troca facial" class="video-preview">
+        <a id="imageSwapDownload" class="account-button" href="#" target="_blank" rel="noopener">Abrir / baixar resultado</a>
+      </div>
 
       <section class="video-studio" id="video-studio">
         <div class="background-heading"><div><span class="eyebrow">VÍDEO E CÂMERA</span><h3>Escolha como quer fazer a troca de rosto</h3><p>Os dois modos estão preparados na interface. </p></div></div>
@@ -108,7 +113,10 @@
             <label class="video-file-label" for="recordedVideo">Selecionar vídeo (MP4, WebM ou MOV)</label>
             <input id="recordedVideo" type="file" accept="video/mp4,video/webm,video/quicktime">
             <video id="recordedVideoPreview" class="video-preview" controls playsinline hidden></video>
-            <p id="recordedVideoStatus" class="video-status" role="status">Nenhum vídeo selecionado. Limite de 250 MB.</p>
+            <p id="recordedVideoStatus" class="video-status" role="status">Nenhum vídeo selecionado. A API FazeSwap aceita vídeos de até 500 MB.</p>
+            <button id="processRecordedVideo" class="account-button" type="button">Trocar rosto no vídeo gravado</button>
+            <video id="fazeSwapVideoResult" class="video-preview" controls playsinline hidden></video>
+            <a id="fazeSwapVideoDownload" class="account-button" href="#" target="_blank" rel="noopener" hidden>Baixar vídeo transformado</a>
           </div>
           <div class="video-mode-card">
             <h4>2. Câmera ao vivo</h4>
@@ -117,6 +125,10 @@
             <canvas id="liveBackgroundCanvas" class="video-preview" hidden></canvas>
             <button id="enableVirtualBackground" class="account-button secondary" type="button" disabled>Ativar fundo virtual</button>
             <div class="camera-actions"><button id="startCamera" class="account-button" type="button">Ligar câmera</button><button id="stopCamera" class="account-button secondary" type="button" disabled>Desligar</button></div>
+            <div class="camera-actions"><button id="prepareLiveSwap" class="account-button" type="button" disabled>Preparar Live Swap (1 min)</button><button id="activateLiveSwap" class="account-button" type="button" disabled>Ativar troca ao vivo</button><button id="stopLiveSwap" class="account-button secondary" type="button" disabled>Parar Live Swap</button></div>
+            <video id="liveFaceSwapPreview" class="video-preview" autoplay muted playsinline hidden></video>
+            <p id="liveSwapStatus" class="video-status" role="status">Selecione uma foto de rosto, ligue a câmera e prepare uma sessão FazeSwap.</p>
+            <div class="camera-actions"><button id="checkFazeSwapBalance" class="account-button secondary" type="button">Consultar saldo FazeSwap</button><span id="fazeSwapBalanceStatus" class="video-status" role="status"></span></div>
             <div class="camera-actions"><button id="startRecording" class="account-button" type="button" disabled>● Iniciar gravação</button><button id="stopRecording" class="account-button secondary" type="button" disabled>Parar gravação</button><button id="downloadRecording" class="account-button secondary" type="button" disabled>Baixar vídeo</button><button id="toggleStudioFullscreen" class="account-button secondary" type="button" aria-label="Abrir estúdio em tela cheia">⛶ Tela cheia</button></div>
             <p id="recordingStatus" class="video-status" role="status"></p>
             <p id="liveCameraStatus" class="video-status" role="status">A câmera permanece desligada até você autorizar.</p>
@@ -140,7 +152,7 @@
       </section>
       <div class="action-row">
         <label class="consent"><input id="consent" type="checkbox"> Confirmo que tenho autorização para usar as imagens e que não vou apresentar o resultado como registro autêntico de outra pessoa.</label>
-        <button id="createButton" class="create-button" disabled>Validar imagens <span>✦</span></button>
+        <button id="createButton" class="create-button" disabled>Trocar rosto com IA <span>✦</span></button>
       </div>
       <div id="notice" class="notice" role="status" aria-live="polite">Selecione as duas imagens e confirme a autorização para validar os arquivos.</div>
     </section>
@@ -159,7 +171,7 @@
         <div><span class="scene-preview-label">SUA CÂMERA</span><video id="callLocalVideo" class="video-preview" autoplay muted playsinline></video></div>
         <div><span class="scene-preview-label">OUTRA PESSOA</span><video id="callRemoteVideo" class="video-preview" autoplay playsinline></video></div>
       </div>
-      <p id="callStatus" class="video-status" role="status">Nenhuma chamada ativa. O navegador solicitará acesso à câmera e ao microfone ao entrar.</p>
+      <p id="callStatus" class="video-status" role="status">Para transmitir o rosto transformado, ligue a câmera e ative o Live Swap antes de entrar na chamada.</p>
     </section>
 
     <section class="steps" id="como-funciona">
@@ -174,7 +186,7 @@
   <script src="./app.js"></script>
   <script src="./account.js?v=20261127-1428-preco-sessao"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation@0.1.1675465747/selfie_segmentation.js" crossorigin="anonymous"></script>
-  <script src="./video.js?v=20261127-fundo-virtual-corrigido"></script>
+  <script src="./video.js?v=20261127-fazeswap-integracao"></script>
   <script src="./calls.js"></script>
 </body>
 </html>
