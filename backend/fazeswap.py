@@ -26,7 +26,9 @@ def _provider_error(status, body):
         data = json.loads(body.decode("utf-8", "replace"))
     except Exception:
         data = {}
-    code = str(data.get("code") or (data.get("error") or {}).get("code") or "")
+    error_value = data.get("error")
+    nested_code = error_value.get("code") if isinstance(error_value, dict) else (error_value if isinstance(error_value, str) else "")
+    code = str(data.get("code") or nested_code or "")
     if status == 401 or code == "unauthorized":
         return HTTPException(status_code=502, detail="A FazeSwap recusou a chave configurada. Confira se a chave foi criada no painel de API da FazeSwap.")
     if status == 402 or code == "insufficient_balance":
