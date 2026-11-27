@@ -16,6 +16,7 @@
   let peer = null;
   let remotePeerId = null;
   let pendingCandidates = [];
+  const sessionToken = () => sessionStorage.getItem("facemagic_session_token") || "";
 
   function setStatus(message) { status.textContent = message; }
   function getRoomId(value) {
@@ -64,7 +65,7 @@
     roomId = room;
     await ensureMedia();
     const wsBase = api.replace(/^http/, "ws");
-    socket = new WebSocket(wsBase + "/ws/calls/" + encodeURIComponent(room));
+    socket = new WebSocket(wsBase + "/ws/calls/" + encodeURIComponent(room) + "?token=" + encodeURIComponent(sessionToken()));
     socket.onmessage = async event => {
       const message = JSON.parse(event.data);
       try {
@@ -144,7 +145,7 @@
   createButton.addEventListener("click", async () => {
     createButton.disabled = true;
     try {
-      const response = await fetch(api + "/api/calls/rooms", { method: "POST" });
+      const response = await fetch(api + "/api/calls/rooms", { method: "POST", headers: sessionToken() ? {"Authorization":"Bearer " + sessionToken()} : {} });
       const data = await response.json();
       if (!response.ok) throw new Error(data.detail || "Não foi possível criar a sala.");
       const invite = new URL(window.location.href);
