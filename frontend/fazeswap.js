@@ -162,4 +162,17 @@
     window.dispatchEvent(new Event("facemagic-live-swap-changed"));
   }
   stopButton?.addEventListener("click", stopLiveSwap);
+
+  // A sessão continua faturando mesmo se a aba for fechada; tenta encerrá-la também no pagehide.
+  window.addEventListener("pagehide", () => {
+    const sessionId = pending?.session_id;
+    if (!sessionId || !token()) return;
+    try {
+      fetch(api + "/api/engine/live-session/" + encodeURIComponent(sessionId) + "/stop", {
+        method: "POST",
+        headers: headers(),
+        keepalive: true
+      });
+    } catch {}
+  });
 })();
