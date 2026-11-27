@@ -51,6 +51,10 @@
       if (me.user.approval_status !== "approved") {
         payPanel.hidden = false;
         balance.textContent = "—";
+        const paymentConfig = await request("/api/payments/config");
+        const payInfo = document.getElementById("paymentInfo");
+        payInfo.textContent = (paymentConfig.amount ? "Valor: R$ " + Number(paymentConfig.amount).toFixed(2).replace(".", ",") + ". " : "Valor do plano ainda não configurado. ") +
+          (paymentConfig.pix_key ? "Chave Pix: " + paymentConfig.pix_key : "Chave Pix ainda não configurada no servidor.");
         setStatus("Cadastro recebido. Acesso aguardando aprovação. Escolha Pix ou cartão SumUp abaixo.");
       } else {
         payPanel.hidden = true;
@@ -101,8 +105,16 @@
   document.getElementById("paySumUp").addEventListener("click", () => choosePayment("sumup_card"));
   async function choosePayment(method) {
     try {
-      const result = await request("/api/payments/select", {method:"POST", body:JSON.stringify({method})});
-      setStatus(result.message || "Forma de pagamento registrada.");
+      if (method === "sumup_card") {
+        setStatus("Abrindo checkout seguro do SumUp…");
+        const result = await request("/api/payments/sumup/create", {method:"POST", body:"{}"});
+        if (!result.checkout_url) throw new Error("O SumUp não retornou o endereço de pagamento.");
+        window.location.assign(result.checkout_url);
+        return;
+      }
+      const proof = document.getElementById("pixProofReference").value.trim();
+      const result = await request("/api/payments/select", {method:"POST", body:JSON.stringify({method, proof_reference:proof || null})});
+      setStatus(result.message || "Pix registrado. Envie o comprovante e aguarde a confirmação manual.");
     } catch (error) { setStatus(error.message, true); }
   }
   document.getElementById("refreshCredits").addEventListener("click", loadAccount);
