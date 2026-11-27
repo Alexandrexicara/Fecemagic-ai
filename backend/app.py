@@ -568,3 +568,8 @@ async def call_signaling(websocket: WebSocket, room_id: str):
                 await peer.send_json({"type": "peer-left", "peer_id": client_id})
             except Exception:
                 pass
+
+
+# Integração FazeSwap: a chave da API permanece exclusivamente no backend.
+from fazeswap import create_fazeswap_router
+app.include_router(create_fazeswap_router(current_user, require_approved))
