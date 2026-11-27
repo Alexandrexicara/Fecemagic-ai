@@ -1,6 +1,7 @@
 """FazeSwap API adapter for FaceMagic AI. API credentials stay on the backend."""
 import http.client
 import json
+import logging
 import os
 import re
 import secrets
@@ -9,6 +10,7 @@ import urllib.request
 from urllib.parse import quote
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 
+logger = logging.getLogger("facemagic.engine")
 BASE = "https://api.fazeswap.com/api/v1"
 IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp"}
 VIDEO_TYPES = {"video/mp4", "video/webm", "video/quicktime", "application/octet-stream"}
@@ -30,8 +32,10 @@ def _provider_error(status, body):
     nested_code = error_value.get("code") if isinstance(error_value, dict) else (error_value if isinstance(error_value, str) else "")
     code = str(data.get("code") or nested_code or "")
     if status == 401 or code == "unauthorized":
-        return HTTPException(status_code=502, detail="A credencial do mecanismo de IA não foi aceita. Verifique a configuração privada do servidor.")
+        logger.warning("Engine rejected configured credential: upstream_status=%s code=%s", status, code or "unauthorized")
+        return HTTPException(status_code=401, detail="A credencial do mecanismo de IA não foi aceita. Verifique a configuração privada do servidor.")
     if status == 402 or code == "insufficient_balance":
+        logger.warning("Engine balance insufficient: upstream_status=%s code=%s", status, code or "insufficient_balance")
         return HTTPException(status_code=402, detail="Saldo de processamento insuficiente. Consulte o painel administrativo antes de continuar.")
     if status == 429:
         return HTTPException(status_code=429, detail="Muitas solicitações em pouco tempo. Aguarde e tente novamente.")
