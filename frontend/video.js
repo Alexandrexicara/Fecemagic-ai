@@ -104,7 +104,7 @@
       cameraStream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } }, audio: true
       });
-      cameraVideo.srcObject = cameraStream; cameraVideo.hidden = false; await cameraVideo.play();
+      cameraVideo.srcObject = cameraStream; window.FaceMagicCameraStream = cameraStream; cameraVideo.hidden = false; await cameraVideo.play(); window.dispatchEvent(new Event("facemagic-camera-started"));
       backgroundButton.disabled = false; recordButton.disabled = false;
       cameraStatus.textContent = "Webcam e microfone ativos. Você pode gravar a câmera ou ativar o fundo virtual.";
       stopButton.disabled = false;
@@ -164,6 +164,9 @@
     processing = false;
     if (cameraStream) cameraStream.getTracks().forEach(track => track.stop());
     cameraStream = null;
+    window.FaceMagicCameraStream = null;
+    window.dispatchEvent(new Event("facemagic-camera-stopped"));
+    window.FaceMagicLiveSwap?.stop?.();
     if (cameraVideo) { cameraVideo.pause(); cameraVideo.srcObject = null; cameraVideo.hidden = true; }
     if (outputCanvas) { const ctx = outputCanvas.getContext("2d"); ctx.clearRect(0,0,outputCanvas.width,outputCanvas.height); outputCanvas.hidden = true; }
     if (stopButton) stopButton.disabled = true;
