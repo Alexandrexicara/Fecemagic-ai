@@ -187,3 +187,14 @@ body{background:#e9edf1;color:#202936}
 @media(max-width:700px){.header-account-button{font-size:12px;padding:9px 11px}.account-switch .account-button{flex:1}}
 
 .video-status{background:#e7f5ec;color:#315b42}.video-disclosure{color:#92501c}.scene-preview{border-color:#c7d0da}.topbar{border-bottom-color:#d4dbe3}.brand{color:#202936}
+
+
+/* Preço da plataforma em destaque, sem alterar os demais componentes. */
+.platform-price{display:flex;flex-direction:column;gap:6px;max-width:390px;margin:22px auto 0;padding:18px 22px;border:1px solid rgba(125,95,255,.32);border-radius:18px;background:rgba(255,255,255,.78);text-align:center;box-shadow:0 12px 35px rgba(40,30,90,.08)}
+.platform-price span{font-size:.72rem;font-weight:800;letter-spacing:.12em;color:#6654a5}
+.platform-price strong{font-size:clamp(2rem,6vw,2.7rem);line-height:1.1;color:#241b45}
+.platform-price small{font-size:.86rem;color:#5d5870;line-height:1.45}
+.account-price{margin:8px 0 0;color:#5d5870;font-size:.94rem}
+.account-price strong{color:#241b45;font-size:1.18rem}
+.gate-price{margin:12px 0;font-size:clamp(1.8rem,5vw,2.4rem);font-weight:850;color:#241b45}
+.gate-price span{font-size:.95rem;font-weight:500;color:#5d5870}
