@@ -186,7 +186,7 @@ def register(data: Credentials):
                 (email, password_hasher.hash(data.password), (data.display_name or "").strip() or None),
             ).fetchone()
             conn.execute("INSERT INTO credit_accounts (user_id, balance) VALUES (%s, 0)", (row["id"],))
-        return {"ok": True, "status": "pending_approval", "user": row, "message": "Cadastro recebido. Escolha a forma de pagamento e aguarde a aprovação do acesso."}
+        return {"ok": True, "status": "pending_approval", "access_token": create_token(row["id"], row["email"]), "token_type": "bearer", "user": row, "message": "Cadastro recebido. Escolha a forma de pagamento e aguarde a aprovação do acesso."}
     except HTTPException:
         raise
     except Exception:
@@ -212,8 +212,6 @@ def login(data: Credentials):
             raise HTTPException(status_code=401, detail="E-mail ou senha incorretos.")
         if row["approval_status"] == "rejected":
             raise HTTPException(status_code=403, detail="Seu cadastro não foi aprovado. Entre em contato com o suporte.")
-        if row["approval_status"] != "approved":
-            raise HTTPException(status_code=403, detail="Cadastro encontrado, mas o acesso ainda aguarda aprovação. Selecione Pix ou cartão SumUp e aguarde a liberação.")
         user = {k: row[k] for k in ("id", "email", "display_name", "created_at", "approval_status", "payment_status", "payment_method")}
         return {"access_token": create_token(row["id"], row["email"]), "token_type": "bearer", "user": user}
     except HTTPException:
