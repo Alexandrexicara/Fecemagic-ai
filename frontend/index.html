@@ -24,7 +24,7 @@
     </section>
 
     <section class="account-panel" id="conta" hidden>
-      <div class="section-heading"><div><span class="eyebrow">SUA CONTA</span><h2>Entre ou crie seu acesso</h2></div><span class="pill">Conta gratuita</span></div>
+      <div class="section-heading"><div><span class="eyebrow">SUA CONTA</span><h2>Entre ou crie seu acesso</h2></div><span class="pill">Compra única</span></div>
       <div class="account-switch"><button id="showRegister" class="account-button" type="button">Cadastrar</button><button id="showLogin" class="account-button secondary" type="button">Entrar</button></div><div class="account-grid">
         <form id="loginForm" class="account-form" hidden>
           <h3>Já tenho conta</h3>
@@ -42,21 +42,19 @@
       </div>
       <div id="accountStatus" class="notice" role="status" aria-live="polite"></div>
       <div id="paymentOptions" class="payment-options" hidden>
-        <h3>Escolha como deseja pagar</h3>
-        <p>Pix: faça o pagamento e envie o comprovante ao responsável. O Pix será confirmado manualmente. Cartão: pague pelo checkout seguro SumUp; a confirmação será automática após a verificação do SumUp.</p>
+        <h3>Conclua a compra da plataforma</h3>
+        <p>Escolha Pix ou cartão. Após a confirmação do pagamento, seu acesso será liberado. Não existe sistema de créditos ou recargas.</p>
         <p id="paymentInfo" class="video-status" role="status">Consultando valor e chave Pix…</p>
         <label class="call-join-label">Referência ou link do comprovante Pix (opcional)<input id="pixProofReference" type="text" maxlength="1000" placeholder="Cole uma referência ou link do comprovante"></label>
         <div class="camera-actions"><button id="payPix" class="account-button" type="button">Pagar com Pix</button><button id="paySumUp" class="account-button secondary" type="button">Cartão pelo SumUp</button></div>
       </div>
       <div id="accountDashboard" class="account-dashboard" hidden>
         <div><strong id="accountWelcome">Minha conta</strong><span id="accountEmail"></span></div>
-        <div class="credit-balance"><span>Meus créditos</span><strong id="creditBalance">0</strong></div>
-        <button id="refreshCredits" class="account-button secondary" type="button">Atualizar saldo</button>
         <button id="logoutButton" class="account-button secondary" type="button">Sair</button>
       </div>
     </section>
 
-    <section id="accessGate" class="access-gate"><h2>Crie sua conta para começar</h2><p>O acesso às ferramentas é liberado somente depois do cadastro, pagamento e aprovação da conta.</p><button id="gateRegister" class="account-button" type="button">Cadastrar agora</button></section><div id="platformContent" hidden>
+    <section id="accessGate" class="access-gate"><h2>Crie sua conta para começar</h2><p>Após o cadastro e a confirmação da compra, seu acesso à plataforma será liberado.</p><button id="gateRegister" class="account-button" type="button">Cadastrar agora</button></section><div id="platformContent" hidden>
     <section class="workspace" id="criar">
       <div class="section-heading"><div><span class="eyebrow">ESTÚDIO FACE MAGIC</span><h2>Troca de rosto em imagem</h2></div><span class="pill">2 imagens necessárias</span></div>
       <div class="upload-grid">
