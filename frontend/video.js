@@ -28,7 +28,7 @@
         await studioSection.requestFullscreen();
       }
     } catch (error) {
-      if (recordingStatus) recordingStatus.textContent = "Não foi possível abrir a tela cheia: " + error.message;
+      if (recordingStatus) recordingStatus.textContent = "Não foi possível abrir a tela cheia.;
     }
   });
   document.addEventListener("fullscreenchange", () => {
@@ -50,7 +50,7 @@
     fileUrl = URL.createObjectURL(file);
     videoPreview.src = fileUrl;
     videoPreview.hidden = false;
-    fileStatus.textContent = "Vídeo carregado para pré-visualização. A troca de rosto em arquivo ainda depende de um motor compatível.";
+    fileStatus.textContent = "Vídeo carregado para pré-visualização. Vídeo pronto para pré-visualização.";
   });
 
   async function loadBackground() {
@@ -66,7 +66,7 @@
   }
 
   async function startSegmentation() {
-    if (!window.SelfieSegmentation) throw new Error("O módulo de segmentação não carregou. Atualize a página e tente novamente.");
+    if (!window.SelfieSegmentation) throw new Error("Não foi possível iniciar este recurso agora.");
     if (!segmenter) {
       segmenter = new SelfieSegmentation({ locateFile: file => "https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation@0.1.1675465747/" + file });
       segmenter.setOptions({ modelSelection: 1, selfieMode: true });
@@ -89,7 +89,7 @@
       if (!framePending && cameraVideo.readyState >= 2) {
         framePending = true;
         try { await loadBackground(); await segmenter.send({ image: cameraVideo }); }
-        catch (error) { framePending = false; cameraStatus.textContent = "Falha ao aplicar o fundo: " + error.message; processing = false; return; }
+        catch (error) { framePending = false; cameraStatus.textContent = "Não foi possível aplicar o fundo selecionado.; processing = false; return; }
       }
       requestAnimationFrame(renderFrame);
     }
@@ -108,7 +108,7 @@
       backgroundButton.disabled = false; recordButton.disabled = false;
       cameraStatus.textContent = "Webcam e microfone ativos. Você pode gravar a câmera ou ativar o fundo virtual.";
       stopButton.disabled = false;
-    } catch (error) { cameraStatus.textContent = "Não foi possível abrir câmera/microfone: " + (error.message || "permissão negada."); }
+    } catch (error) { cameraStatus.textContent = "Não foi possível abrir a câmera. Verifique a permissão do navegador.; }
     finally { startButton.disabled = false; }
   });
 
@@ -145,7 +145,7 @@
       recorder.start(1000);
       recordButton.disabled = true; stopRecordButton.disabled = false;
       recordingStatus.textContent = "Gravando vídeo e áudio…";
-    } catch (error) { recordingStatus.textContent = error.message; }
+    } catch (error) { recordingStatus.textContent = "Não foi possível iniciar a gravação. Tente novamente."; }
   });
 
   stopRecordButton?.addEventListener("click", () => {
