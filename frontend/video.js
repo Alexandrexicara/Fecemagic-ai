@@ -122,10 +122,14 @@
   recordButton?.addEventListener("click", () => {
     if (!cameraStream) return;
     try {
+      const swappedStream = window.FaceMagicLiveSwap?.getStream?.();
       const videoSource = !outputCanvas.hidden && outputCanvas.captureStream
         ? outputCanvas.captureStream(30) : cameraVideo.captureStream(30);
-      const tracks = [...videoSource.getVideoTracks(), ...cameraStream.getAudioTracks()];
-      const recordingStream = new MediaStream(tracks);
+      const videoTracks = swappedStream?.getVideoTracks?.().length
+        ? swappedStream.getVideoTracks() : videoSource.getVideoTracks();
+      const audioTracks = swappedStream?.getAudioTracks?.().length
+        ? swappedStream.getAudioTracks() : cameraStream.getAudioTracks();
+      const recordingStream = new MediaStream([...videoTracks, ...audioTracks]);
       const mimeType = ["video/webm;codecs=vp9,opus","video/webm;codecs=vp8,opus","video/webm"]
         .find(type => MediaRecorder.isTypeSupported(type));
       if (!mimeType) throw new Error("Este navegador não oferece formato de gravação compatível. Use Chrome ou Edge atualizado.");
