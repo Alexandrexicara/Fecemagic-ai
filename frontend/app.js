@@ -39,13 +39,18 @@ createButton.addEventListener("click", async () => {
     notice.textContent = "As imagens foram selecionadas. O motor de transformação ainda não foi ativado: estamos validando um modelo gratuito com licença comercial adequada. Nenhuma API paga será chamada.";
     return;
   }
+  const sessionToken = sessionStorage.getItem("facemagic_session_token") || "";
+  if (!sessionToken) {
+    notice.textContent = "Entre ou crie uma conta e aguarde a aprovação antes de validar as imagens.";
+    return;
+  }
   const body = new FormData();
   body.append("source_image", sourceInput.files[0]);
   body.append("target_image", targetInput.files[0]);
   createButton.disabled = true;
   notice.textContent = "Validando arquivos com o servidor…";
   try {
-    const response = await fetch(API_BASE_URL.replace(/\/$/, "") + "/api/validate", { method: "POST", body });
+    const response = await fetch(API_BASE_URL.replace(/\/$/, "") + "/api/validate", { method: "POST", body, headers: {"Authorization":"Bearer " + sessionToken} });
     const data = await response.json();
     if (!response.ok) throw new Error(data.detail || "Não foi possível validar as imagens.");
     notice.textContent = "Arquivos validados. " + data.message;
