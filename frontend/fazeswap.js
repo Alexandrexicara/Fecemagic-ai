@@ -112,6 +112,7 @@
       pending = await request("/api/fazeswap/live-session", { method: "POST", body: form });
       if (liveStatus) liveStatus.textContent = "Sessão preparada. Teto máximo informado: US$ " + Number(pending.max_cost_usd || 0).toFixed(2) + ". A cobrança efetiva é pelos segundos transmitidos. Clique em Ativar para começar.";
       if (activateButton) activateButton.disabled = false;
+      prepareButton.disabled = true;
     } catch (error) {
       pending = null;
       if (liveStatus) liveStatus.textContent = error.message;
@@ -149,6 +150,7 @@
       try { await request("/api/fazeswap/live-session/" + encodeURIComponent(pending.session_id) + "/stop", { method: "POST" }); } catch {}
       pending = null;
       if (activateButton) activateButton.disabled = true;
+      if (prepareButton) prepareButton.disabled = !window.FaceMagicCameraStream;
     }
   });
 
@@ -167,6 +169,7 @@
     }
     if (stopButton) stopButton.disabled = true;
     if (activateButton) activateButton.disabled = true;
+    if (prepareButton) prepareButton.disabled = !window.FaceMagicCameraStream;
     if (session?.session_id && token()) {
       try { await request("/api/fazeswap/live-session/" + encodeURIComponent(session.session_id) + "/stop", { method: "POST" }); } catch {}
     }
