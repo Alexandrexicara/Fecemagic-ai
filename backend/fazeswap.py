@@ -18,7 +18,7 @@ MAX_VIDEO_BYTES = 500 * 1024 * 1024
 def _api_key():
     key = os.getenv("FAZESWAP_API_KEY", "").strip()
     if not key:
-        raise HTTPException(status_code=503, detail="A integração FazeSwap ainda não está configurada no servidor.")
+        raise HTTPException(status_code=503, detail="O mecanismo de transformação ainda não está configurado no servidor.")
     return key
 
 def _provider_error(status, body):
@@ -30,12 +30,12 @@ def _provider_error(status, body):
     nested_code = error_value.get("code") if isinstance(error_value, dict) else (error_value if isinstance(error_value, str) else "")
     code = str(data.get("code") or nested_code or "")
     if status == 401 or code == "unauthorized":
-        return HTTPException(status_code=502, detail="A FazeSwap recusou a chave configurada. Confira se a chave foi criada no painel de API da FazeSwap.")
+        return HTTPException(status_code=502, detail="A credencial do mecanismo de IA não foi aceita. Verifique a configuração privada do servidor.")
     if status == 402 or code == "insufficient_balance":
-        return HTTPException(status_code=402, detail="Saldo insuficiente na conta FazeSwap. Consulte o saldo antes de continuar.")
+        return HTTPException(status_code=402, detail="Saldo de processamento insuficiente. Consulte o painel administrativo antes de continuar.")
     if status == 429:
-        return HTTPException(status_code=429, detail="A FazeSwap está limitando as solicitações. Aguarde um pouco e tente novamente.")
-    return HTTPException(status_code=502, detail=str(data.get("message") or data.get("detail") or "A FazeSwap não conseguiu concluir a solicitação.")[:300])
+        return HTTPException(status_code=429, detail="Muitas solicitações em pouco tempo. Aguarde e tente novamente.")
+    return HTTPException(status_code=502, detail=str(data.get("message") or data.get("detail") or "O mecanismo de transformação não conseguiu concluir a solicitação.")[:300])
 
 def _request(method, path, payload=None, auth=True):
     headers = {"Accept": "application/json"}
@@ -55,7 +55,7 @@ def _request(method, path, payload=None, auth=True):
     except HTTPException:
         raise
     except Exception:
-        raise HTTPException(status_code=502, detail="Não foi possível conectar à API da FazeSwap.")
+        raise HTTPException(status_code=502, detail="Não foi possível conectar ao mecanismo de transformação.")
 
 def _upload(upload: UploadFile, allowed_types, max_bytes):
     content_type = (upload.content_type or "application/octet-stream").split(";")[0].lower()
@@ -92,18 +92,18 @@ def _upload(upload: UploadFile, allowed_types, max_bytes):
             raise _provider_error(response.status, raw)
         result = json.loads(raw.decode("utf-8"))
         if not result.get("file_key"):
-            raise HTTPException(status_code=502, detail="A FazeSwap não retornou a referência do arquivo enviado.")
+            raise HTTPException(status_code=502, detail="O mecanismo não retornou a referência do arquivo enviado.")
         return result
     except HTTPException:
         raise
     except Exception:
-        raise HTTPException(status_code=502, detail="Falha ao enviar o arquivo para a FazeSwap.")
+        raise HTTPException(status_code=502, detail="Falha ao enviar o arquivo para processamento.")
     finally:
         conn.close()
         file_obj.seek(0)
 
 def create_fazeswap_router(current_user, require_approved):
-    router = APIRouter(prefix="/api/fazeswap", tags=["FazeSwap"])
+    router = APIRouter(prefix="/api/engine", tags=["FaceMagic AI Engine"])
 
     @router.get("/account")
     def account(user=Depends(current_user)):
@@ -140,10 +140,10 @@ def create_fazeswap_router(current_user, require_approved):
         face = _upload(face_image, IMAGE_TYPES, MAX_IMAGE_BYTES)
         session = _request("POST", "/full-live-swap/session", {"duration_minutes": duration_minutes})
         if not session.get("session") or not session.get("session_id") or not session.get("sdk_url"):
-            raise HTTPException(status_code=502, detail="A FazeSwap não retornou os dados necessários para iniciar o Live Swap.")
+            raise HTTPException(status_code=502, detail="O mecanismo não retornou os dados necessários para iniciar a transformação ao vivo.")
         image_url = face.get("url")
         if not image_url or not str(image_url).startswith("https://"):
-            raise HTTPException(status_code=502, detail="A FazeSwap não retornou uma URL HTTPS para a foto de referência.")
+            raise HTTPException(status_code=502, detail="O mecanismo não retornou uma imagem de referência válida.")
         return {"ok": True, "session_id": session["session_id"], "session": session["session"], "sdk_url": session["sdk_url"], "prompt": session.get("prompt", ""), "reference_image_url": image_url, "max_duration_sec": session.get("max_duration_sec"), "max_cost_usd": session.get("max_cost_usd")}
 
     @router.post("/live-session/{session_id}/stop")
