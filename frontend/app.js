@@ -48,12 +48,33 @@ createButton.addEventListener("click", async () => {
   body.append("source_image", sourceInput.files[0]);
   body.append("target_image", targetInput.files[0]);
   createButton.disabled = true;
-  notice.textContent = "Validando arquivos com o servidor…";
+  notice.textContent = "Enviando imagens para a FazeSwap…";
   try {
-    const response = await fetch(API_BASE_URL.replace(/\/$/, "") + "/api/validate", { method: "POST", body, headers: {"Authorization":"Bearer " + sessionToken} });
+    const response = await fetch(API_BASE_URL.replace(/\/$/, "") + "/api/fazeswap/image", { method: "POST", body, headers: {"Authorization":"Bearer " + sessionToken} });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.detail || "Não foi possível validar as imagens.");
-    notice.textContent = "Tudo certo! Seus arquivos foram recebidos.";
+    if (!response.ok) throw new Error(data.detail || "Não foi possível iniciar a troca facial.");
+    if (!data.job_id) throw new Error("A FazeSwap não retornou o identificador do processamento.");
+    notice.textContent = "Processando a troca facial na FazeSwap…";
+    let result = null;
+    for (let attempt = 0; attempt < 120; attempt++) {
+      await new Promise(resolve => setTimeout(resolve, 2500));
+      const statusResponse = await fetch(API_BASE_URL.replace(/\/$/, "") + "/api/fazeswap/jobs/" + encodeURIComponent(data.job_id), { headers: {"Authorization":"Bearer " + sessionToken} });
+      const statusData = await statusResponse.json();
+      if (!statusResponse.ok) throw new Error(statusData.detail || "Não foi possível consultar o processamento.");
+      if (statusData.status === "succeeded" && statusData.output_url) { result = statusData; break; }
+      if (statusData.status === "failed") throw new Error(statusData.error?.message || "A FazeSwap não conseguiu gerar a imagem.");
+      notice.textContent = "A FazeSwap está processando sua imagem… (" + (attempt + 1) + ")";
+    }
+    if (!result) throw new Error("O processamento ainda está em andamento. Tente consultar novamente em instantes.");
+    const resultBox = document.getElementById("imageSwapResult");
+    const resultImage = document.getElementById("imageSwapOutput");
+    const resultLink = document.getElementById("imageSwapDownload");
+    if (resultImage && resultBox && resultLink) {
+      resultImage.src = result.output_url;
+      resultLink.href = result.output_url;
+      resultBox.hidden = false;
+    }
+    notice.textContent = "Troca facial concluída pela FazeSwap. Custo desta geração: US$ " + Number(result.charged_usd || 0).toFixed(4) + ".";
   } catch (error) {
     notice.textContent = "Não foi possível concluir agora. Tente novamente mais tarde.";
   } finally { updateButton(); }
