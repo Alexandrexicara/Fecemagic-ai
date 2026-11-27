@@ -28,7 +28,7 @@
         await studioSection.requestFullscreen();
       }
     } catch (error) {
-      if (recordingStatus) recordingStatus.textContent = "Não foi possível abrir a tela cheia.;
+      if (recordingStatus) recordingStatus.textContent = "Não foi possível abrir a tela cheia.";
     }
   });
   document.addEventListener("fullscreenchange", () => {
@@ -89,7 +89,7 @@
       if (!framePending && cameraVideo.readyState >= 2) {
         framePending = true;
         try { await loadBackground(); await segmenter.send({ image: cameraVideo }); }
-        catch (error) { framePending = false; cameraStatus.textContent = "Não foi possível aplicar o fundo selecionado.; processing = false; return; }
+        catch (error) { framePending = false; cameraStatus.textContent = "Não foi possível aplicar o fundo selecionado."; processing = false; return; }
       }
       requestAnimationFrame(renderFrame);
     }
@@ -108,7 +108,7 @@
       backgroundButton.disabled = false; recordButton.disabled = false;
       cameraStatus.textContent = "Webcam e microfone ativos. Você pode gravar a câmera ou ativar o fundo virtual.";
       stopButton.disabled = false;
-    } catch (error) { cameraStatus.textContent = "Não foi possível abrir a câmera. Verifique a permissão do navegador.; }
+    } catch (error) { cameraStatus.textContent = "Não foi possível abrir a câmera. Verifique a permissão do navegador."; }
     finally { startButton.disabled = false; }
   });
 
