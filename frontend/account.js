@@ -4,6 +4,17 @@
   const loginForm = document.getElementById("loginForm");
   const registerForm = document.getElementById("registerForm");
   const dashboard = document.getElementById("accountDashboard");
+  const accountPanel = document.getElementById("conta");
+  const platformContent = document.getElementById("platformContent");
+  const accessGate = document.getElementById("accessGate");
+  function showForm(which) { loginForm.hidden = which !== "login"; registerForm.hidden = which !== "register"; }
+  document.getElementById("accountToggle")?.addEventListener("click", () => { accountPanel.hidden = !accountPanel.hidden; if (!accountPanel.hidden) accountPanel.scrollIntoView({behavior:"smooth",block:"start"}); });
+  document.getElementById("gateRegister")?.addEventListener("click", () => { accountPanel.hidden=false; showForm("register"); accountPanel.scrollIntoView({behavior:"smooth",block:"start"}); });
+  document.getElementById("showRegister")?.addEventListener("click", () => showForm("register"));
+  document.getElementById("showLogin")?.addEventListener("click", () => showForm("login"));
+  function updateAccess(approved) { if (platformContent) platformContent.hidden = !approved; if (accessGate) accessGate.hidden = approved; }
+  showForm("register");
+  updateAccess(false);
   if (!loginForm || !registerForm) return;
   const tokenKey = "facemagic_session_token";
   const token = () => sessionStorage.getItem(tokenKey);
@@ -48,7 +59,10 @@
       dashboard.hidden = false;
       const payPanel = document.getElementById("paymentOptions");
       const balance = document.getElementById("creditBalance");
-      if (me.user.approval_status !== "approved") {
+      const approved = me.user.approval_status === "approved";
+      updateAccess(approved);
+      document.getElementById("accountToggle").textContent = approved ? "Minha conta" : "Conta / Pagamento";
+      if (!approved) {
         payPanel.hidden = false;
         balance.textContent = "—";
         const paymentConfig = await request("/api/payments/config");
@@ -65,6 +79,7 @@
     } catch (error) {
       sessionStorage.removeItem(tokenKey);
       dashboard.hidden = true;
+      updateAccess(false);
       setStatus(error.message, true);
       await refreshSystemStatus();
     }
@@ -121,6 +136,9 @@
   document.getElementById("logoutButton").addEventListener("click", () => {
     sessionStorage.removeItem(tokenKey);
     dashboard.hidden = true;
+    updateAccess(false);
+    document.getElementById("accountToggle").textContent = "Cadastrar / Entrar";
+    accountPanel.hidden = true;
     refreshSystemStatus();
   });
   refreshSystemStatus();
