@@ -76,7 +76,7 @@ createButton.addEventListener("click", async () => {
     }
     notice.textContent = "Troca facial concluída pela FazeSwap. Custo desta geração: US$ " + Number(result.charged_usd || 0).toFixed(4) + ".";
   } catch (error) {
-    notice.textContent = "Não foi possível concluir agora. Tente novamente mais tarde.";
+    notice.textContent = error.message || "Não foi possível concluir a troca facial.";
   } finally { updateButton(); }
 });
 window.addEventListener("beforeunload", () => objectUrls.forEach(URL.revokeObjectURL.bind(URL)));
