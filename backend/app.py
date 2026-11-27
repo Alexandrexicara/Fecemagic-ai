@@ -3,6 +3,9 @@ import logging
 import os
 import re
 import secrets
+import json
+import urllib.request
+import urllib.error
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
@@ -292,11 +295,126 @@ def select_payment(data: PaymentChoice, user=Depends(current_user)):
                 (data.method, user["id"]),
             )
         if data.method == "sumup_card":
-            return {"ok": True, "method": "sumup_card", "status": "pending", "message": "Sua escolha de cartão foi registrada. O checkout e a confirmação automática do SumUp precisam estar configurados no servidor."}
-        return {"ok": True, "method": "pix", "status": "pending", "message": "Pix selecionado. Envie o comprovante ao responsável e aguarde a confirmação manual."}
+            return {"ok": True, "method": "sumup_card", "status": "pending", "message": "Cartão SumUp selecionado. Toque em continuar para abrir o checkout seguro."}
+        return {"ok": True, "method": "pix", "status": "pending", "pix_key": os.getenv("FACEMAGIC_PIX_KEY", "").strip() or None, "amount": payment_amount(), "message": "Pix selecionado. Envie o comprovante ao responsável e aguarde a confirmação manual."}
     except Exception:
         logger.exception("Falha ao registrar forma de pagamento")
         raise HTTPException(status_code=503, detail="Não foi possível registrar a forma de pagamento.")
+
+
+
+
+
+def payment_amount():
+    raw = (os.getenv("FACEMAGIC_PRICE_BRL") or os.getenv("SUMUP_AMOUNT_BRL") or "").strip()
+    try:
+        amount = float(raw.replace(",", "."))
+        return amount if amount > 0 else None
+    except (TypeError, ValueError):
+        return None
+
+
+def sumup_credentials():
+    token = (os.getenv("SUMUP_API_KEY") or os.getenv("SUMUP_ACCESS_TOKEN") or "").strip()
+    merchant = (os.getenv("SUMUP_MERCHANT_CODE") or os.getenv("SUMUP_MERCHANT_ID") or "").strip()
+    return token, merchant
+
+
+def sumup_request(method, path, body=None):
+    token, _ = sumup_credentials()
+    if not token:
+        raise HTTPException(status_code=503, detail="Credencial do SumUp não configurada no Render.")
+    payload = json.dumps(body).encode("utf-8") if body is not None else None
+    request = urllib.request.Request(
+        "https://api.sumup.com" + path,
+        data=payload,
+        method=method,
+        headers={"Authorization": "Bearer " + token, "Content-Type": "application/json", "Accept": "application/json"},
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=20) as response:
+            return json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        logger.error("SumUp HTTP %s ao processar checkout", exc.code)
+        raise HTTPException(status_code=502, detail="O SumUp não aceitou a solicitação. Verifique a configuração da conta de pagamentos.")
+    except Exception:
+        logger.exception("Falha de comunicação com SumUp")
+        raise HTTPException(status_code=502, detail="Não foi possível conectar ao SumUp.")
+
+
+@app.post("/api/payments/sumup/create")
+def create_sumup_checkout(user=Depends(current_user)):
+    amount = payment_amount()
+    token, merchant = sumup_credentials()
+    if not amount:
+        raise HTTPException(status_code=503, detail="Defina FACEMAGIC_PRICE_BRL no Render antes de iniciar o checkout.")
+    if not token or not merchant:
+        raise HTTPException(status_code=503, detail="Configure SUMUP_API_KEY e SUMUP_MERCHANT_CODE no Render.")
+    try:
+        with get_connection() as conn:
+            payment = conn.execute(
+                """INSERT INTO payment_requests (user_id, method, status)
+                   VALUES (%s, 'sumup_card', 'pending') RETURNING id::text AS id""",
+                (user["id"],),
+            ).fetchone()
+            conn.execute("UPDATE users SET payment_status='pending', payment_method='sumup_card', updated_at=now() WHERE id=%s", (user["id"],))
+        reference = "facemagic-" + payment["id"]
+        frontend = (os.getenv("FRONTEND_URL") or "https://fecemagic-ai.netlify.app").rstrip("/")
+        checkout = sumup_request("POST", "/v0.1/checkouts", {
+            "checkout_reference": reference,
+            "amount": amount,
+            "currency": "BRL",
+            "merchant_code": merchant,
+            "description": "FaceMagic AI - acesso",
+            "hosted_checkout": {"enabled": True},
+            "redirect_url": frontend + "/?payment=return",
+            "return_url": frontend + "/?payment=return",
+        })
+        checkout_id = checkout.get("id")
+        checkout_url = checkout.get("hosted_checkout_url")
+        if not checkout_id or not checkout_url:
+            raise HTTPException(status_code=502, detail="SumUp não retornou o link seguro de pagamento.")
+        with get_connection() as conn:
+            conn.execute("UPDATE payment_requests SET provider_reference=%s, updated_at=now() WHERE id=%s", (checkout_id, payment["id"]))
+        return {"ok": True, "checkout_url": checkout_url, "checkout_id": checkout_id}
+    except HTTPException:
+        raise
+    except Exception:
+        logger.exception("Falha ao criar checkout SumUp")
+        raise HTTPException(status_code=503, detail="Não foi possível iniciar o pagamento.")
+
+
+@app.post("/api/payments/sumup/webhook")
+async def sumup_webhook(payload: dict):
+    checkout_id = str(payload.get("id") or payload.get("checkout_id") or "").strip()
+    if not checkout_id:
+        raise HTTPException(status_code=400, detail="Checkout id ausente.")
+    checkout = sumup_request("GET", "/v0.1/checkouts/" + checkout_id)
+    transactions = checkout.get("transactions") or []
+    paid = str(checkout.get("status", "")).upper() == "PAID" or any(
+        str(tx.get("status", "")).upper() == "SUCCESSFUL" for tx in transactions
+    )
+    if not paid:
+        return {"ok": True, "verified": True, "status": checkout.get("status", "PENDING")}
+    with get_connection() as conn:
+        payment = conn.execute(
+            "SELECT user_id FROM payment_requests WHERE provider_reference=%s AND method='sumup_card'",
+            (checkout_id,),
+        ).fetchone()
+        if not payment:
+            return {"ok": True, "verified": True, "matched": False}
+        conn.execute("UPDATE payment_requests SET status='paid', updated_at=now() WHERE provider_reference=%s", (checkout_id,))
+        conn.execute(
+            """UPDATE users SET payment_status='paid', approval_status='approved',
+               approved_at=COALESCE(approved_at, now()), approved_by='sumup_verified',
+               updated_at=now() WHERE id=%s""", (payment["user_id"],)
+        )
+    return {"ok": True, "verified": True, "status": "PAID"}
+
+
+@app.get("/api/payments/config")
+def payment_config():
+    return {"amount": payment_amount(), "currency": "BRL", "pix_key": os.getenv("FACEMAGIC_PIX_KEY", "").strip() or None, "sumup_ready": bool(sumup_credentials()[0] and sumup_credentials()[1] and payment_amount())}
 
 
 @app.get("/api/admin/registrations")
