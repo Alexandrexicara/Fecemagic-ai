@@ -45,21 +45,6 @@
     throw new Error("O processamento ainda está em andamento. Consulte novamente em instantes.");
   }
 
-  /* account/balance controls intentionally remain in the admin backend, not in the customer studio */
-  balanceButton?.addEventListener("click", async () => {
-    balanceButton.disabled = true;
-    if (balanceStatus) balanceStatus.textContent = "Consultando saldo da FaceMagic AI…";
-    try {
-      const data = await request("/api/engine/account");
-      const balance = Number(data.balance?.balance_usd);
-      if (balanceStatus) balanceStatus.textContent = Number.isFinite(balance)
-        ? "Saldo disponível: US$ " + balance.toFixed(2)
-        : "Consulta concluída. Confira o painel da FaceMagic AI para ver os créditos.";
-    } catch (error) {
-      if (balanceStatus) balanceStatus.textContent = error.message;
-    } finally { balanceButton.disabled = false; }
-  });
-
   processVideoButton?.addEventListener("click", async () => {
     const video = videoInput?.files?.[0];
     const face = faceInput?.files?.[0];
