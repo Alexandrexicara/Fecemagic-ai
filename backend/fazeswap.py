@@ -7,7 +7,7 @@ import re
 import secrets
 import urllib.error
 import urllib.request
-from urllib.parse import quote
+from urllib.parse import quote, urlsplit
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 
 logger = logging.getLogger("facemagic.engine")
@@ -120,7 +120,7 @@ def create_fazeswap_router(current_user, require_approved):
         face = _upload(source_image, IMAGE_TYPES, MAX_IMAGE_BYTES)
         base = _upload(target_image, IMAGE_TYPES, MAX_IMAGE_BYTES)
         job = _request("POST", "/face-swap-image", {"image_key": base["file_key"], "face_key": face["file_key"]})
-        return {"ok": True, "job_id": job.get("id"), "status": job.get("status", "queued")}
+        return {"ok": True, "job_id": job.get("id"), "status": job.get("status", "queued"), "status_url": job.get("status_url")}
 
     @router.post("/video")
     def swap_video(recorded_video: UploadFile = File(...), face_image: UploadFile = File(...), user=Depends(current_user)):
@@ -131,11 +131,17 @@ def create_fazeswap_router(current_user, require_approved):
         return {"ok": True, "job_id": job.get("id"), "status": job.get("status", "queued")}
 
     @router.get("/jobs/{job_id}")
-    def job_status(job_id: str, user=Depends(current_user)):
+    def job_status(job_id: str, status_url: str = None, user=Depends(current_user)):
         require_approved(user)
         if not re.fullmatch(r"[A-Za-z0-9_-]{1,128}", job_id):
             raise HTTPException(status_code=400, detail="Identificador de processamento inválido.")
-        result = _request("GET", "/jobs/" + quote(job_id, safe=""))
+        status_path = "/jobs/" + quote(job_id, safe="")
+        if status_url:
+            parsed = urlsplit(status_url)
+            if parsed.scheme != "https" or parsed.netloc != "api.fazeswap.com" or not parsed.path.startswith("/api/v1/jobs/"):
+                raise HTTPException(status_code=400, detail="Endereço de consulta do processamento inválido.")
+            status_path = parsed.path[len("/api/v1"):] + (("?" + parsed.query) if parsed.query else "")
+        result = _request("GET", status_path)
         return {"ok": True, "id": result.get("id"), "status": result.get("status"), "output_url": result.get("output_url"), "charged_usd": result.get("charged_usd"), "error": result.get("error")}
 
     @router.post("/live-session")
