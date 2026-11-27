@@ -95,6 +95,7 @@
       })});
       sessionStorage.setItem(tokenKey, data.access_token);
       loginForm.reset();
+      showForm(null);
       await loadAccount();
     } catch(error) { setStatus(error.message, true); }
     finally { button.disabled = false; }
@@ -111,6 +112,7 @@
       })});
       sessionStorage.setItem(tokenKey, data.access_token);
       registerForm.reset();
+      showForm(null);
       setStatus(data.message || "Cadastro recebido. Aguarde a aprovação.");
       await loadAccount();
     } catch(error) { setStatus(error.message, true); }
