@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#11111f">
+  <meta name="theme-color" content="#e9edf1">
   <meta name="description" content="FaceMagic AI — troca de rosto em imagens e vídeos com inteligência artificial.">
   <title>FaceMagic AI</title>
   <link rel="stylesheet" href="./styles.css">
@@ -13,7 +13,7 @@
   <header class="topbar">
     <a class="brand" href="#" aria-label="FaceMagic AI início"><span class="brand-mark">✦</span><span>FaceMagic <b>AI</b></span></a>
     <nav><a href="#como-funciona">Como funciona</a><a href="#criar">Criar imagem</a><a href="#video-studio">Vídeo e câmera</a></nav>
-    <span class="status"><i></i> FaceMagic AI</span>
+    <button id="accountToggle" class="header-account-button" type="button">Cadastrar / Entrar</button>
   </header>
   <main>
     <section class="hero">
@@ -23,16 +23,16 @@
       <a class="primary-link" href="#criar">Começar agora <span>↘</span></a>
     </section>
 
-    <section class="account-panel" id="conta">
+    <section class="account-panel" id="conta" hidden>
       <div class="section-heading"><div><span class="eyebrow">SUA CONTA</span><h2>Entre ou crie seu acesso</h2></div><span class="pill">Conta gratuita</span></div>
-      <div class="account-grid">
-        <form id="loginForm" class="account-form">
+      <div class="account-switch"><button id="showRegister" class="account-button" type="button">Cadastrar</button><button id="showLogin" class="account-button secondary" type="button">Entrar</button></div><div class="account-grid">
+        <form id="loginForm" class="account-form" hidden>
           <h3>Já tenho conta</h3>
           <label>E-mail<input id="loginEmail" type="email" autocomplete="email" required maxlength="254"></label>
           <label>Senha<input id="loginPassword" type="password" autocomplete="current-password" required minlength="10" maxlength="128"></label>
           <button class="account-button" type="submit">Entrar</button>
         </form>
-        <form id="registerForm" class="account-form">
+        <form id="registerForm" class="account-form" hidden>
           <h3>Quero me cadastrar</h3>
           <label>Nome (opcional)<input id="registerName" type="text" autocomplete="name" maxlength="80"></label>
           <label>E-mail<input id="registerEmail" type="email" autocomplete="email" required maxlength="254"></label>
@@ -56,6 +56,7 @@
       </div>
     </section>
 
+    <section id="accessGate" class="access-gate"><h2>Crie sua conta para começar</h2><p>O acesso às ferramentas é liberado somente depois do cadastro, pagamento e aprovação da conta.</p><button id="gateRegister" class="account-button" type="button">Cadastrar agora</button></section><div id="platformContent" hidden>
     <section class="workspace" id="criar">
       <div class="section-heading"><div><span class="eyebrow">ESTÚDIO FACE MAGIC</span><h2>Troca de rosto em imagem</h2></div><span class="pill">2 imagens necessárias</span></div>
       <div class="upload-grid">
@@ -135,17 +136,20 @@
       </div>
       <p id="callStatus" class="video-status" role="status">Nenhuma chamada ativa. O navegador solicitará acesso à câmera e ao microfone ao entrar.</p>
     </section>
-\n    <section class="steps" id="como-funciona">
+
+    <section class="steps" id="como-funciona">
       <div><span class="step-number">01</span><h3>Envie a foto e o destino</h3><p>Escolha o rosto e a imagem de referência.</p></div>
       <div><span class="step-number">02</span><h3>Escolha vídeo ou câmera</h3><p>Use um vídeo gravado ou abra a webcam para pré-visualização.</p></div>
       <div><span class="step-number">03</span><h3>Gere com IA</h3><p>O processamento será habilitado após a conexão e os testes do motor de face swap.</p></div>
     </section>
+    </div>
   </main>
   <footer><span class="brand"><span class="brand-mark">✦</span> FaceMagic <b>AI</b></span><span>Conteúdo sintético deve ser identificado como gerado ou alterado por IA.</span></footer>
   <script src="./config.js"></script>
   <script src="./app.js"></script>
   <script src="./account.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation@0.1.1675465747/selfie_segmentation.js" crossorigin="anonymous"></script>
-  <script src="./video.js"></script>\n  <script src="./calls.js"></script>
+  <script src="./video.js"></script>
+  <script src="./calls.js"></script>
 </body>
 </html>
