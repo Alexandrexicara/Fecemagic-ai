@@ -163,3 +163,5 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline-color:#00c853}
 #video-studio:fullscreen .video-preview{max-height:45vh}
 #video-studio:fullscreen .camera-actions{justify-content:flex-start}
 @media(max-width:760px){#video-studio:fullscreen{padding:12px;justify-content:flex-start}#video-studio:fullscreen .video-mode-grid{grid-template-columns:1fr}#video-studio:fullscreen .video-preview{max-height:35vh}}
+
+.payment-options{margin-top:16px;padding:18px;border:1px solid #8b5cf644;border-radius:14px;background:#8b5cf610}.payment-options h3{margin:0 0 8px;font-family:'Space Grotesk'}.payment-options p{color:var(--muted);font-size:13px;line-height:1.6}.payment-options[hidden]{display:none}
