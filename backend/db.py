@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS users (
     email TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
     display_name TEXT,
+    role TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('user','admin')),
     approval_status TEXT NOT NULL DEFAULT 'pending' CHECK (approval_status IN ('pending','approved','rejected')),
     payment_status TEXT NOT NULL DEFAULT 'unpaid' CHECK (payment_status IN ('unpaid','pending','paid','manual_comped')),
     payment_method TEXT CHECK (payment_method IN ('pix','sumup_card')),
@@ -53,6 +54,7 @@ CREATE TABLE IF NOT EXISTS consent_records (
     policy_version TEXT NOT NULL,
     accepted_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT NOT NULL DEFAULT 'user';
 ALTER TABLE users ADD COLUMN IF NOT EXISTS approval_status TEXT NOT NULL DEFAULT 'pending';
 ALTER TABLE users ADD COLUMN IF NOT EXISTS payment_status TEXT NOT NULL DEFAULT 'unpaid';
 ALTER TABLE users ADD COLUMN IF NOT EXISTS payment_method TEXT;
