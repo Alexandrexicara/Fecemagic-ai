@@ -165,3 +165,23 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline-color:#00c853}
 @media(max-width:760px){#video-studio:fullscreen{padding:12px;justify-content:flex-start}#video-studio:fullscreen .video-mode-grid{grid-template-columns:1fr}#video-studio:fullscreen .video-preview{max-height:35vh}}
 
 .payment-options{margin-top:16px;padding:18px;border:1px solid #8b5cf644;border-radius:14px;background:#8b5cf610}.payment-options h3{margin:0 0 8px;font-family:'Space Grotesk'}.payment-options p{color:var(--muted);font-size:13px;line-height:1.6}.payment-options[hidden]{display:none}
+
+
+/* Tema claro e fluxo de conta compacto */
+:root{color-scheme:light;--bg:#e9edf1;--panel:#f7f9fb;--line:#d4dbe3;--text:#202936;--muted:#657386}
+body{background:#e9edf1;color:#202936}
+.workspace,.account-panel{background:#f7f9fb;border-color:#d4dbe3;box-shadow:0 12px 38px #26384a12}
+.upload-card,.account-form,.background-studio,.video-mode-card,.call-video-grid>div{background:#eef2f6;border-color:#d4dbe3;color:#202936}
+.account-form input,.call-join-label input{background:#fff;color:#202936;border-color:#c7d0da}
+.background-options{background:#e7edf2;border-color:#d4dbe3}
+.background-option{background:#f8fafc;color:#202936;border-color:#d4dbe3}
+.video-studio{background:#f1f5f8;border-color:#d4dbe3}
+.video-mode-card h4{color:#202936}
+.header-account-button{padding:10px 16px;border:0;border-radius:10px;background:#167b45;color:#fff;font-weight:700;cursor:pointer}
+.account-panel[hidden],#platformContent[hidden],#accessGate[hidden],.account-form[hidden]{display:none!important}
+.account-switch{display:flex;gap:10px;margin-bottom:14px}
+.access-gate{margin:18px 0 26px;padding:28px;border:1px solid #d4dbe3;border-radius:18px;background:#f7f9fb;text-align:center;box-shadow:0 12px 38px #26384a12}
+.access-gate h2{margin:0 0 8px;font:600 24px 'Space Grotesk';color:#202936}
+.access-gate p{color:#657386;line-height:1.6}
+.notice{background:#e7f5ec;border-color:#c4e4d0;color:#245b3a}
+@media(max-width:700px){.header-account-button{font-size:12px;padding:9px 11px}.account-switch .account-button{flex:1}}
