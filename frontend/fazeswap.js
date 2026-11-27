@@ -14,10 +14,10 @@
   const stopButton = $("stopLiveSwap");
   const livePreview = $("liveFaceSwapPreview");
   const liveStatus = $("liveSwapStatus");
-  const balanceButton = $("checkFazeSwapBalance");
+  const balanceButton = $("checkFaceMagic AIBalance");
   const balanceStatus = $("fazeSwapBalanceStatus");
   let pending = null;
-  let swap = null;
+  let transformação = null;
   let outputStream = null;
 
   window.FaceMagicLiveSwap = {
@@ -39,23 +39,23 @@
   async function pollJob(id, statusElement) {
     for (let i = 0; i < 180; i++) {
       await new Promise(resolve => setTimeout(resolve, 2500));
-      const data = await request("/api/fazeswap/jobs/" + encodeURIComponent(id));
+      const data = await request("/api/engine/jobs/" + encodeURIComponent(id));
       if (data.status === "succeeded" && data.output_url) return data;
-      if (data.status === "failed") throw new Error(data.error?.message || "A FazeSwap não conseguiu processar o arquivo.");
-      if (statusElement) statusElement.textContent = "Processando na FazeSwap… " + (i + 1);
+      if (data.status === "failed") throw new Error(data.error?.message || "A FaceMagic AI não conseguiu processar o arquivo.");
+      if (statusElement) statusElement.textContent = "Processando na FaceMagic AI… " + (i + 1);
     }
     throw new Error("O processamento ainda está em andamento. Consulte novamente em instantes.");
   }
 
   balanceButton?.addEventListener("click", async () => {
     balanceButton.disabled = true;
-    if (balanceStatus) balanceStatus.textContent = "Consultando saldo da FazeSwap…";
+    if (balanceStatus) balanceStatus.textContent = "Consultando saldo da FaceMagic AI…";
     try {
-      const data = await request("/api/fazeswap/account");
+      const data = await request("/api/engine/account");
       const balance = Number(data.balance?.balance_usd);
       if (balanceStatus) balanceStatus.textContent = Number.isFinite(balance)
         ? "Saldo disponível: US$ " + balance.toFixed(2)
-        : "Consulta concluída. Confira o painel da FazeSwap para ver os créditos.";
+        : "Consulta concluída. Confira o painel da FaceMagic AI para ver os créditos.";
     } catch (error) {
       if (balanceStatus) balanceStatus.textContent = error.message;
     } finally { balanceButton.disabled = false; }
@@ -73,17 +73,17 @@
       return;
     }
     processVideoButton.disabled = true;
-    if (videoStatus) videoStatus.textContent = "Enviando vídeo e rosto para a FazeSwap…";
+    if (videoStatus) videoStatus.textContent = "Enviando vídeo e rosto para a FaceMagic AI…";
     try {
       const form = new FormData();
       form.append("recorded_video", video);
       form.append("face_image", face);
-      const started = await request("/api/fazeswap/video", { method: "POST", body: form });
-      if (!started.job_id) throw new Error("A FazeSwap não retornou o ID do processamento.");
+      const started = await request("/api/engine/video", { method: "POST", body: form });
+      if (!started.job_id) throw new Error("A FaceMagic AI não retornou o ID do processamento.");
       const result = await pollJob(started.job_id, videoStatus);
       if (videoResult) { videoResult.src = result.output_url; videoResult.hidden = false; }
       if (videoDownload) { videoDownload.href = result.output_url; videoDownload.hidden = false; }
-      if (videoStatus) videoStatus.textContent = "Vídeo transformado. Custo informado pela FazeSwap: US$ " + Number(result.charged_usd || 0).toFixed(4) + ".";
+      if (videoStatus) videoStatus.textContent = "Vídeo transformado. Custo informado pela FaceMagic AI: US$ " + Number(result.charged_usd || 0).toFixed(4) + ".";
     } catch (error) {
       if (videoStatus) videoStatus.textContent = error.message;
     } finally { processVideoButton.disabled = false; }
@@ -101,15 +101,15 @@
   prepareButton?.addEventListener("click", async () => {
     const face = faceInput?.files?.[0];
     if (!face) { if (liveStatus) liveStatus.textContent = "Selecione primeiro a foto do rosto na seção de imagens."; return; }
-    if (!window.FaceMagicCameraStream) { if (liveStatus) liveStatus.textContent = "Ligue a câmera antes de preparar o Live Swap."; return; }
-    if (!token()) { if (liveStatus) liveStatus.textContent = "Entre em uma conta aprovada para usar a FazeSwap."; return; }
+    if (!window.FaceMagicCameraStream) { if (liveStatus) liveStatus.textContent = "Ligue a câmera antes de preparar o transformação ao vivo."; return; }
+    if (!token()) { if (liveStatus) liveStatus.textContent = "Entre em uma conta aprovada para usar a FaceMagic AI."; return; }
     prepareButton.disabled = true;
-    if (liveStatus) liveStatus.textContent = "Criando sessão de 1 minuto na FazeSwap…";
+    if (liveStatus) liveStatus.textContent = "Criando sessão de 1 minuto na FaceMagic AI…";
     try {
       const form = new FormData();
       form.append("face_image", face);
       form.append("duration_minutes", "1");
-      pending = await request("/api/fazeswap/live-session", { method: "POST", body: form });
+      pending = await request("/api/engine/live-session", { method: "POST", body: form });
       if (liveStatus) liveStatus.textContent = "Sessão preparada. Teto máximo informado: US$ " + Number(pending.max_cost_usd || 0).toFixed(2) + ". A cobrança efetiva é pelos segundos transmitidos. Clique em Ativar para começar.";
       if (activateButton) activateButton.disabled = false;
       prepareButton.disabled = true;
@@ -123,18 +123,18 @@
     const camera = window.FaceMagicCameraStream;
     if (!pending || !camera) return;
     activateButton.disabled = true;
-    if (liveStatus) liveStatus.textContent = "Conectando à FazeSwap…";
+    if (liveStatus) liveStatus.textContent = "Conectando à FaceMagic AI…";
     try {
       const sdk = await import(pending.sdk_url);
       const cameraInput = new MediaStream(camera.getVideoTracks());
-      swap = await sdk.startRealtimeSwap({
+      transformação = await sdk.startRealtimeSwap({
         session: pending.session,
         referenceImage: pending.reference_image_url,
         prompt: pending.prompt,
         camera: () => cameraInput,
-        onState: state => { if (liveStatus) liveStatus.textContent = "FazeSwap: " + String(state); }
+        onState: state => { if (liveStatus) liveStatus.textContent = "FaceMagic AI: " + String(state); }
       });
-      outputStream = new MediaStream([...swap.stream.getVideoTracks(), ...camera.getAudioTracks()]);
+      outputStream = new MediaStream([...transformação.stream.getVideoTracks(), ...camera.getAudioTracks()]);
       if (livePreview) {
         livePreview.srcObject = outputStream;
         livePreview.hidden = false;
@@ -144,10 +144,10 @@
       if (rawPreview) rawPreview.hidden = true;
       if (stopButton) stopButton.disabled = false;
       if (liveStatus) liveStatus.textContent = "Troca facial ao vivo ativa. Agora entre na chamada FaceMagic para transmitir o vídeo transformado.";
-      window.dispatchEvent(new Event("facemagic-live-swap-changed"));
+      window.dispatchEvent(new Event("facemagic-live-transformação-changed"));
     } catch (error) {
       if (liveStatus) liveStatus.textContent = "Não foi possível iniciar a troca ao vivo: " + (error.message || "falha de conexão");
-      try { await request("/api/fazeswap/live-session/" + encodeURIComponent(pending.session_id) + "/stop", { method: "POST" }); } catch {}
+      try { await request("/api/engine/live-session/" + encodeURIComponent(pending.session_id) + "/stop", { method: "POST" }); } catch {}
       pending = null;
       if (activateButton) activateButton.disabled = true;
       if (prepareButton) prepareButton.disabled = !window.FaceMagicCameraStream;
@@ -157,8 +157,8 @@
   async function stopLiveSwap() {
     const session = pending;
     pending = null;
-    if (swap?.stream) swap.stream.getTracks().forEach(track => track.stop());
-    swap = null;
+    if (transformação?.stream) transformação.stream.getTracks().forEach(track => track.stop());
+    transformação = null;
     if (outputStream) outputStream.getVideoTracks().forEach(track => track.stop());
     outputStream = null;
     if (livePreview) { livePreview.pause(); livePreview.srcObject = null; livePreview.hidden = true; }
@@ -171,10 +171,10 @@
     if (activateButton) activateButton.disabled = true;
     if (prepareButton) prepareButton.disabled = !window.FaceMagicCameraStream;
     if (session?.session_id && token()) {
-      try { await request("/api/fazeswap/live-session/" + encodeURIComponent(session.session_id) + "/stop", { method: "POST" }); } catch {}
+      try { await request("/api/engine/live-session/" + encodeURIComponent(session.session_id) + "/stop", { method: "POST" }); } catch {}
     }
-    if (liveStatus) liveStatus.textContent = "Live Swap encerrado. A câmera original continua disponível.";
-    window.dispatchEvent(new Event("facemagic-live-swap-changed"));
+    if (liveStatus) liveStatus.textContent = "transformação ao vivo encerrado. A câmera original continua disponível.";
+    window.dispatchEvent(new Event("facemagic-live-transformação-changed"));
   }
   stopButton?.addEventListener("click", stopLiveSwap);
 })();
