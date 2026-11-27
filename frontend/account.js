@@ -42,12 +42,22 @@
   async function loadAccount() {
     if (!token()) { dashboard.hidden = true; return; }
     try {
-      const [me, credits] = await Promise.all([request("/api/me"), request("/api/credits")]);
+      const me = await request("/api/me");
       document.getElementById("accountWelcome").textContent = "Olá, " + (me.user.display_name || "bem-vindo(a)") + "!";
       document.getElementById("accountEmail").textContent = me.user.email;
-      document.getElementById("creditBalance").textContent = credits.balance;
       dashboard.hidden = false;
-      setStatus("Sua sessão está ativa.");
+      const payPanel = document.getElementById("paymentOptions");
+      const balance = document.getElementById("creditBalance");
+      if (me.user.approval_status !== "approved") {
+        payPanel.hidden = false;
+        balance.textContent = "—";
+        setStatus("Cadastro recebido. Acesso aguardando aprovação. Escolha Pix ou cartão SumUp abaixo.");
+      } else {
+        payPanel.hidden = true;
+        const credits = await request("/api/credits");
+        balance.textContent = credits.balance;
+        setStatus("Acesso aprovado. Sua sessão está ativa.");
+      }
     } catch (error) {
       sessionStorage.removeItem(tokenKey);
       dashboard.hidden = true;
@@ -82,10 +92,19 @@
       })});
       sessionStorage.setItem(tokenKey, data.access_token);
       registerForm.reset();
+      setStatus(data.message || "Cadastro recebido. Aguarde a aprovação.");
       await loadAccount();
     } catch(error) { setStatus(error.message, true); }
     finally { button.disabled = false; }
   });
+  document.getElementById("payPix").addEventListener("click", () => choosePayment("pix"));
+  document.getElementById("paySumUp").addEventListener("click", () => choosePayment("sumup_card"));
+  async function choosePayment(method) {
+    try {
+      const result = await request("/api/payments/select", {method:"POST", body:JSON.stringify({method})});
+      setStatus(result.message || "Forma de pagamento registrada.");
+    } catch (error) { setStatus(error.message, true); }
+  }
   document.getElementById("refreshCredits").addEventListener("click", loadAccount);
   document.getElementById("logoutButton").addEventListener("click", () => {
     sessionStorage.removeItem(tokenKey);
