@@ -59,12 +59,6 @@ class AdminDecision(BaseModel):
     note: Optional[str] = Field(default=None, max_length=300)
 
 
-class CreditAdjustment(BaseModel):
-    email: str = Field(min_length=5, max_length=254)
-    amount: int = Field(gt=0, le=100000)
-    reason: str = Field(min_length=3, max_length=160)
-
-
 def normalize_email(value: str) -> str:
     email = value.strip().lower()
     if not re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", email):
@@ -176,7 +170,6 @@ def capabilities():
         "live_face_swap": False,
         "virtual_camera": False,
         "accounts": database and auth_ready,
-        "credits": database and auth_ready,
         "database": database,
         "auth_configured": auth_ready,
         "nvidia_api_configured": bool(os.getenv("NVIDIA_API_KEY", "").strip()),
@@ -203,7 +196,6 @@ def register(data: Credentials):
                  "admin" if is_admin else "user", "approved" if is_admin else "pending",
                  "manual_comped" if is_admin else "unpaid", is_admin, is_admin),
             ).fetchone()
-            conn.execute("INSERT INTO credit_accounts (user_id, balance) VALUES (%s, 0)", (row["id"],))
         return {"ok": True, "status": "approved" if is_admin else "pending_approval", "access_token": create_token(row["id"], row["email"]), "token_type": "bearer", "user": row, "message": "Conta administrativa liberada." if is_admin else "Cadastro recebido. Escolha a forma de pagamento e aguarde a aprovação do acesso."}
     except HTTPException:
         raise
@@ -248,58 +240,6 @@ def login(data: Credentials):
 @app.get("/api/me")
 def me(user=Depends(current_user)):
     return {"user": user}
-
-
-@app.get("/api/credits")
-def credits(user=Depends(current_user)):
-    require_approved(user)
-    try:
-        with get_connection() as conn:
-            account = conn.execute(
-                "SELECT balance FROM credit_accounts WHERE user_id = %s", (user["id"],)
-            ).fetchone()
-            ledger = conn.execute(
-                """SELECT amount, reason, created_at FROM credit_ledger
-                   WHERE user_id = %s ORDER BY created_at DESC LIMIT 20""",
-                (user["id"],),
-            ).fetchall()
-        return {"balance": account["balance"] if account else 0, "history": ledger}
-    except Exception:
-        logger.exception("Falha ao consultar créditos")
-        raise HTTPException(status_code=503, detail="Não foi possível consultar seus créditos.")
-
-
-@app.post("/api/admin/credits")
-def admin_add_credits(data: CreditAdjustment, x_admin_key: Optional[str] = Header(default=None)):
-    admin_key = os.getenv("ADMIN_API_KEY", "")
-    if not admin_key or not x_admin_key or not secrets.compare_digest(admin_key, x_admin_key):
-        raise HTTPException(status_code=403, detail="Ação administrativa não autorizada.")
-    email = normalize_email(data.email)
-    try:
-        with get_connection() as conn:
-            user = conn.execute("SELECT id FROM users WHERE email = %s", (email,)).fetchone()
-            if not user:
-                raise HTTPException(status_code=404, detail="Usuário não encontrado.")
-            conn.execute(
-                """INSERT INTO credit_accounts (user_id, balance) VALUES (%s, %s)
-                   ON CONFLICT (user_id) DO UPDATE
-                   SET balance = credit_accounts.balance + EXCLUDED.balance,
-                       updated_at = now()""",
-                (user["id"], data.amount),
-            )
-            conn.execute(
-                "INSERT INTO credit_ledger (user_id, amount, reason) VALUES (%s, %s, %s)",
-                (user["id"], data.amount, data.reason),
-            )
-        return {"ok": True, "email": email, "credits_added": data.amount}
-    except HTTPException:
-        raise
-    except Exception:
-        logger.exception("Falha ao adicionar créditos")
-        raise HTTPException(status_code=503, detail="Não foi possível atualizar os créditos.")
-
-
-
 
 
 @app.post("/api/payments/select")
