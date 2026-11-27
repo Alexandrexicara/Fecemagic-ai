@@ -24,7 +24,7 @@
     status.style.color = isError ? "#fca5a5" : "";
   };
   async function request(path, options={}) {
-    if (!api) throw new Error("Endereço da API não configurado.");
+    if (!api) throw new Error("Não foi possível concluir agora. Tente novamente mais tarde.");
     const response = await fetch(api + path, {
       ...options,
       headers: {"Content-Type":"application/json", ...(token()?{"Authorization":"Bearer "+token()}:{}), ...(options.headers||{})}
@@ -33,23 +33,7 @@
     if (!response.ok) throw new Error(data.detail || "Não foi possível concluir a solicitação.");
     return data;
   }
-  async function refreshSystemStatus() {
-    if (!api) { setStatus("API não configurada. O serviço de conta não pode ser consultado.", true); return; }
-    try {
-      const health = await request("/api/health");
-      if (typeof health.auth_configured !== "boolean" || typeof health.registration_enabled !== "boolean") {
-        setStatus("A API está online, mas o Render ainda está atualizando o diagnóstico de Neon e autenticação. Tente novamente em instantes.");
-        return;
-      }
-      const db = health.database === "connected" ? "Neon conectado" :
-        health.database === "not_configured" ? "DATABASE_URL não configurada no Render" : "Neon configurado, mas indisponível";
-      const auth = health.auth_configured ? "autenticação configurada" : "JWT_SECRET ausente no Render";
-      const registration = health.registration_enabled ? "Cadastro e login disponíveis." : "Cadastro e login bloqueados até corrigir os itens acima.";
-      setStatus(db + " · " + auth + ". " + registration, !health.registration_enabled);
-    } catch (error) {
-      setStatus("Não foi possível consultar o estado real da API: " + error.message, true);
-    }
-  }
+  async function refreshSystemStatus() { setStatus("Entre ou cadastre-se para continuar."); }
   async function loadAccount() {
     if (!token()) { dashboard.hidden = true; return; }
     try {
@@ -80,7 +64,7 @@
       sessionStorage.removeItem(tokenKey);
       dashboard.hidden = true;
       updateAccess(false);
-      setStatus(error.message, true);
+      setStatus("Não foi possível concluir agora. Confira os dados e tente novamente.", true);
       await refreshSystemStatus();
     }
   }
@@ -123,7 +107,7 @@
   async function choosePayment(method) {
     try {
       if (method === "sumup_card") {
-        setStatus("Abrindo checkout seguro do SumUp…");
+        setStatus("Abrindo pagamento seguro…");
         const result = await request("/api/payments/sumup/create", {method:"POST", body:"{}"});
         if (!result.checkout_url) throw new Error("O SumUp não retornou o endereço de pagamento.");
         window.location.assign(result.checkout_url);
