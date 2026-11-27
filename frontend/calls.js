@@ -32,7 +32,7 @@
   }
   async function ensureMedia() {
     if (stream) return stream;
-    if (!navigator.mediaDevices?.getUserMedia) throw new Error("Câmera e microfone exigem HTTPS e permissão do navegador.");
+    if (!navigator.mediaDevices?.getUserMedia) throw new Error("Permita o acesso à câmera e ao microfone para continuar.");
     stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
     localVideo.srcObject = stream;
     await localVideo.play();
@@ -54,13 +54,13 @@
     };
     peer.onconnectionstatechange = () => {
       if (peer && ["failed", "disconnected"].includes(peer.connectionState)) {
-        setStatus("A conexão caiu ou não atravessou a rede. Tente novamente; redes restritivas podem exigir um servidor TURN.");
+        setStatus("A conexão foi interrompida. Tente novamente.");
       }
     };
     return peer;
   }
   async function connect(room) {
-    if (!api) throw new Error("A URL da API do Render não está configurada.");
+    if (!api) throw new Error("Não foi possível iniciar a chamada agora.");
     if (socket || peer) await leave(false);
     roomId = room;
     await ensureMedia();
@@ -113,7 +113,7 @@
           remotePeerId = null;
         }
       } catch (error) {
-        setStatus("Falha ao negociar a chamada: " + error.message);
+        setStatus("Não foi possível conectar as duas pessoas. Tente novamente.");
       }
     };
     socket.onopen = () => {
@@ -122,7 +122,7 @@
       joinButton.disabled = true;
       setStatus("Conectado à sala. Aguardando sinalização…");
     };
-    socket.onerror = () => setStatus("Não foi possível conectar à sala. Verifique se o Render terminou a implantação.");
+    socket.onerror = () => setStatus("Não foi possível conectar à chamada. Tente novamente em instantes.");
     socket.onclose = () => {
       if (roomId) setStatus("Conexão com a sala encerrada.");
     };
@@ -156,14 +156,14 @@
       setStatus("Sala criada e convite preparado. Compartilhe o link para a outra pessoa entrar.");
     } catch (error) {
       createButton.disabled = false;
-      setStatus("Não foi possível iniciar a chamada: " + error.message);
+      setStatus("Não foi possível iniciar a chamada. Tente novamente.");
     }
   });
   joinButton.addEventListener("click", async () => {
     const room = getRoomId(roomInput.value || new URLSearchParams(location.search).get("room"));
     if (!room) { setStatus("Cole o link ou código da sala primeiro."); return; }
     try { await connect(room); }
-    catch (error) { setStatus("Não foi possível entrar: " + error.message); }
+    catch (error) { setStatus("Não foi possível entrar na sala. Confira o link e tente novamente."); }
   });
   leaveButton.addEventListener("click", () => leave(true));
   const fullscreenButton = $("toggleCallFullscreen");
@@ -177,7 +177,7 @@
         await document.exitFullscreen();
       }
     } catch (error) {
-      setStatus("Não foi possível alterar a tela cheia: " + error.message);
+      setStatus("Não foi possível alterar a tela cheia.");
     }
   });
   document.addEventListener("fullscreenchange", () => {
