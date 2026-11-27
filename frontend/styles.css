@@ -246,3 +246,14 @@ body{background:#e9edf1;color:#202936}
  .showcase{padding:38px 0 52px}.showcase-grid{grid-template-columns:1fr;gap:14px}
  .showcase-media{height:230px}.sample-pair figure{height:185px}
 }
+
+
+/* Resultados e controles da integração FazeSwap */
+.fazeswap-result{margin:18px 0;padding:18px;border:1px solid #b9c9d8;border-radius:16px;background:#fff;display:flex;flex-direction:column;gap:12px}
+.fazeswap-result[hidden]{display:none!important}
+.fazeswap-result h3{margin:0;color:#202936;font:700 18px 'Space Grotesk'}
+.fazeswap-result img{max-width:100%;max-height:560px;object-fit:contain;border-radius:12px;background:#e8edf4}
+#liveFaceSwapPreview{border:2px solid #16a05a}
+#liveSwapStatus,#fazeSwapBalanceStatus{min-height:20px}
+#processRecordedVideo,#prepareLiveSwap,#activateLiveSwap,#stopLiveSwap,#checkFazeSwapBalance{margin-top:8px}
+.video-mode-card .account-button{max-width:100%}
