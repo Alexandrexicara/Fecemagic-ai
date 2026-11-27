@@ -44,6 +44,17 @@ class Credentials(BaseModel):
     display_name: Optional[str] = Field(default=None, max_length=80)
 
 
+class PaymentChoice(BaseModel):
+    method: str = Field(pattern="^(pix|sumup_card)$")
+    proof_reference: Optional[str] = Field(default=None, max_length=1000)
+
+
+class AdminDecision(BaseModel):
+    email: str = Field(min_length=5, max_length=254)
+    action: str = Field(pattern="^(approve|reject|confirm_pix|mark_unpaid)$")
+    note: Optional[str] = Field(default=None, max_length=300)
+
+
 class CreditAdjustment(BaseModel):
     email: str = Field(min_length=5, max_length=254)
     amount: int = Field(gt=0, le=100000)
@@ -85,7 +96,7 @@ def current_user(credentials: HTTPAuthorizationCredentials = Depends(bearer)):
     try:
         with get_connection() as conn:
             row = conn.execute(
-                "SELECT id::text AS id, email, display_name, created_at FROM users WHERE id = %s",
+                "SELECT id::text AS id, email, display_name, created_at, approval_status, payment_status, payment_method FROM users WHERE id = %s",
                 (user_id,),
             ).fetchone()
     except Exception:
@@ -126,6 +137,8 @@ def health():
         "database_configured": bool(os.getenv("DATABASE_URL", "").strip()),
         "auth_configured": auth_ready,
         "registration_enabled": database_ready and auth_ready,
+        "approval_required": True,
+        "payment_methods": ["pix", "sumup_card"],
         "face_swap_engine": "ready" if engine_status.configured else "not_configured",
         "nvidia_api_configured": bool(os.getenv("NVIDIA_API_KEY", "").strip()),
     }
@@ -167,13 +180,13 @@ def register(data: Credentials):
             if exists:
                 raise HTTPException(status_code=409, detail="Este e-mail já possui cadastro.")
             row = conn.execute(
-                """INSERT INTO users (email, password_hash, display_name)
-                   VALUES (%s, %s, %s)
-                   RETURNING id::text AS id, email, display_name, created_at""",
+                """INSERT INTO users (email, password_hash, display_name, approval_status, payment_status)
+                   VALUES (%s, %s, %s, 'pending', 'unpaid')
+                   RETURNING id::text AS id, email, display_name, created_at, approval_status, payment_status""",
                 (email, password_hasher.hash(data.password), (data.display_name or "").strip() or None),
             ).fetchone()
             conn.execute("INSERT INTO credit_accounts (user_id, balance) VALUES (%s, 0)", (row["id"],))
-        return {"access_token": create_token(row["id"], row["email"]), "token_type": "bearer", "user": row}
+        return {"ok": True, "status": "pending_approval", "user": row, "message": "Cadastro recebido. Escolha a forma de pagamento e aguarde a aprovação do acesso."}
     except HTTPException:
         raise
     except Exception:
@@ -188,7 +201,7 @@ def login(data: Credentials):
     try:
         with get_connection() as conn:
             row = conn.execute(
-                "SELECT id::text AS id, email, display_name, password_hash, created_at FROM users WHERE email = %s",
+                "SELECT id::text AS id, email, display_name, password_hash, created_at, approval_status, payment_status, payment_method FROM users WHERE email = %s",
                 (email,),
             ).fetchone()
         if not row:
@@ -197,7 +210,11 @@ def login(data: Credentials):
             password_hasher.verify(row["password_hash"], data.password)
         except (VerifyMismatchError, InvalidHashError):
             raise HTTPException(status_code=401, detail="E-mail ou senha incorretos.")
-        user = {k: row[k] for k in ("id", "email", "display_name", "created_at")}
+        if row["approval_status"] == "rejected":
+            raise HTTPException(status_code=403, detail="Seu cadastro não foi aprovado. Entre em contato com o suporte.")
+        if row["approval_status"] != "approved":
+            raise HTTPException(status_code=403, detail="Cadastro encontrado, mas o acesso ainda aguarda aprovação. Selecione Pix ou cartão SumUp e aguarde a liberação.")
+        user = {k: row[k] for k in ("id", "email", "display_name", "created_at", "approval_status", "payment_status", "payment_method")}
         return {"access_token": create_token(row["id"], row["email"]), "token_type": "bearer", "user": user}
     except HTTPException:
         raise
@@ -213,6 +230,7 @@ def me(user=Depends(current_user)):
 
 @app.get("/api/credits")
 def credits(user=Depends(current_user)):
+    require_approved(user)
     try:
         with get_connection() as conn:
             account = conn.execute(
@@ -259,6 +277,89 @@ def admin_add_credits(data: CreditAdjustment, x_admin_key: Optional[str] = Heade
         raise HTTPException(status_code=503, detail="Não foi possível atualizar os créditos.")
 
 
+
+
+
+@app.post("/api/payments/select")
+def select_payment(data: PaymentChoice, user=Depends(current_user)):
+    """Registra escolha de Pix ou cartão. O Pix aguarda comprovante e validação manual."""
+    try:
+        with get_connection() as conn:
+            conn.execute(
+                "INSERT INTO payment_requests (user_id, method, status, proof_reference) VALUES (%s, %s, 'pending', %s)",
+                (user["id"], data.method, data.proof_reference),
+            )
+            conn.execute(
+                "UPDATE users SET payment_status='pending', payment_method=%s, updated_at=now() WHERE id=%s",
+                (data.method, user["id"]),
+            )
+        if data.method == "sumup_card":
+            return {"ok": True, "method": "sumup_card", "status": "pending", "message": "Sua escolha de cartão foi registrada. O checkout e a confirmação automática do SumUp precisam estar configurados no servidor."}
+        return {"ok": True, "method": "pix", "status": "pending", "message": "Pix selecionado. Envie o comprovante ao responsável e aguarde a confirmação manual."}
+    except Exception:
+        logger.exception("Falha ao registrar forma de pagamento")
+        raise HTTPException(status_code=503, detail="Não foi possível registrar a forma de pagamento.")
+
+
+@app.get("/api/admin/registrations")
+def admin_registrations(x_admin_key: Optional[str] = Header(default=None)):
+    admin_authorized(x_admin_key)
+    try:
+        with get_connection() as conn:
+            rows = conn.execute(
+                """SELECT email, display_name, approval_status, payment_status, payment_method,
+                          created_at, approved_at, approved_by
+                   FROM users ORDER BY created_at DESC LIMIT 500"""
+            ).fetchall()
+            counts = conn.execute(
+                """SELECT count(*) AS total,
+                          count(*) FILTER (WHERE approval_status='pending') AS pending_approval,
+                          count(*) FILTER (WHERE payment_status='pending') AS pending_payment,
+                          count(*) FILTER (WHERE payment_status='paid') AS paid
+                   FROM users"""
+            ).fetchone()
+        return {"registrations": rows, "counts": counts}
+    except Exception:
+        logger.exception("Falha ao consultar cadastros")
+        raise HTTPException(status_code=503, detail="Não foi possível consultar os cadastros.")
+
+
+@app.post("/api/admin/registration-decision")
+def admin_registration_decision(data: AdminDecision, x_admin_key: Optional[str] = Header(default=None)):
+    admin_authorized(x_admin_key)
+    email = normalize_email(data.email)
+    try:
+        with get_connection() as conn:
+            user = conn.execute("SELECT id, approval_status, payment_status FROM users WHERE email=%s", (email,)).fetchone()
+            if not user:
+                raise HTTPException(status_code=404, detail="Cadastro não encontrado.")
+            if data.action == "approve":
+                conn.execute(
+                    """UPDATE users SET approval_status='approved', approved_at=now(), approved_by=%s,
+                       updated_at=now() WHERE id=%s""",
+                    (os.getenv("ADMIN_DISPLAY_NAME", "admin"), user["id"]),
+                )
+            elif data.action == "reject":
+                conn.execute("UPDATE users SET approval_status='rejected', updated_at=now() WHERE id=%s", (user["id"],))
+            elif data.action == "confirm_pix":
+                conn.execute(
+                    """UPDATE users SET payment_status='paid', payment_method='pix', updated_at=now()
+                       WHERE id=%s""", (user["id"],)
+                )
+                conn.execute(
+                    """UPDATE payment_requests SET status='paid', updated_at=now()
+                       WHERE user_id=%s AND method='pix' AND status='pending'""", (user["id"],)
+                )
+            elif data.action == "mark_unpaid":
+                conn.execute("UPDATE users SET payment_status='unpaid', updated_at=now() WHERE id=%s", (user["id"],))
+        return {"ok": True, "email": email, "action": data.action, "approval_status": "approved" if data.action == "approve" else ("rejected" if data.action == "reject" else user["approval_status"]), "payment_status": "paid" if data.action == "confirm_pix" else ("unpaid" if data.action == "mark_unpaid" else user["payment_status"])}
+    except HTTPException:
+        raise
+    except Exception:
+        logger.exception("Falha ao atualizar cadastro")
+        raise HTTPException(status_code=503, detail="Não foi possível atualizar o cadastro.")
+
+
 async def inspect_image(upload: UploadFile):
     if upload.content_type not in MIME_TYPES:
         raise HTTPException(status_code=415, detail="Formato não permitido. Use JPG, PNG ou WebP.")
@@ -274,7 +375,8 @@ async def inspect_image(upload: UploadFile):
 
 
 @app.post("/api/validate")
-async def validate_images(source_image: UploadFile = File(...), target_image: UploadFile = File(...)):
+async def validate_images(source_image: UploadFile = File(...), target_image: UploadFile = File(...), user=Depends(current_user)):
+    require_approved(user)
     source = await inspect_image(source_image)
     target = await inspect_image(target_image)
     return {
@@ -286,7 +388,8 @@ async def validate_images(source_image: UploadFile = File(...), target_image: Up
 
 
 @app.post("/api/transform")
-async def transform_images(source_image: UploadFile = File(...), target_image: UploadFile = File(...)):
+async def transform_images(source_image: UploadFile = File(...), target_image: UploadFile = File(...), user=Depends(current_user)):
+    require_approved(user)
     engine_status = engine.status()
     if not engine_status.configured:
         raise HTTPException(status_code=503, detail="O motor de transformação ainda não foi aprovado e configurado.")
@@ -310,7 +413,8 @@ _call_rooms_lock = asyncio.Lock()
 _CALL_ROOM_TTL_SECONDS = 6 * 60 * 60
 
 @app.post("/api/calls/rooms")
-async def create_call_room():
+async def create_call_room(user=Depends(current_user)):
+    require_approved(user)
     now = datetime.now(timezone.utc).timestamp()
     async with _call_rooms_lock:
         expired = [key for key, room in _call_rooms.items() if now - room["created_at"] > _CALL_ROOM_TTL_SECONDS and not room["clients"]]
