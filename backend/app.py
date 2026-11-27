@@ -368,7 +368,7 @@ def create_sumup_checkout(user=Depends(current_user)):
             "description": "FaceMagic AI - acesso",
             "hosted_checkout": {"enabled": True},
             "redirect_url": frontend + "/?payment=return",
-            "return_url": frontend + "/?payment=return",
+            "return_url": (os.getenv("PUBLIC_API_URL") or "https://fecemagic-ai.onrender.com").rstrip("/") + "/api/payments/sumup/webhook",
         })
         checkout_id = checkout.get("id")
         checkout_url = checkout.get("hosted_checkout_url")
