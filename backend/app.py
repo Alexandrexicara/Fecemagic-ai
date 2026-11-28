@@ -426,11 +426,32 @@ async def sumup_webhook(payload: dict):
     return {"ok": True, "verified": True, "status": "PAID"}
 
 
+SUMUP_PAYMENT_CHECK_CACHE = None
+
+
+def verify_sumup_payment_methods(token, merchant, amount):
+    global SUMUP_PAYMENT_CHECK_CACHE
+    if SUMUP_PAYMENT_CHECK_CACHE is not None:
+        return SUMUP_PAYMENT_CHECK_CACHE
+    try:
+        data = sumup_request(
+            "GET",
+            "/v0.1/merchants/" + merchant + "/payment-methods?amount=" + str(amount) + "&currency=BRL",
+        )
+        methods = data.get("items") or data.get("available_payment_methods") or []
+        ids = sorted({str(item.get("id") or "").lower() for item in methods if item.get("id")})
+        SUMUP_PAYMENT_CHECK_CACHE = {"ok": True, "methods": ids}
+    except HTTPException:
+        SUMUP_PAYMENT_CHECK_CACHE = {"ok": False, "methods": []}
+    return SUMUP_PAYMENT_CHECK_CACHE
+
+
 @app.get("/api/payments/config")
 def payment_config():
     token, merchant = sumup_credentials()
     merchant = merchant or resolve_sumup_merchant(token)
     amount = payment_amount()
+    api_check = verify_sumup_payment_methods(token, merchant, amount) if token and merchant and amount else {"ok": False, "methods": []}
     return {
         "amount": amount,
         "currency": "BRL",
@@ -438,7 +459,9 @@ def payment_config():
         "sumup_token_configured": bool(token),
         "sumup_merchant_configured": bool(merchant),
         "sumup_amount_configured": bool(amount),
-        "sumup_ready": bool(token and merchant and amount),
+        "sumup_api_verified": bool(api_check["ok"]),
+        "sumup_payment_methods": api_check["methods"],
+        "sumup_ready": bool(token and merchant and amount and api_check["ok"]),
     }
 
 
