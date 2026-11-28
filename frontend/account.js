@@ -45,7 +45,16 @@
     pixButton.disabled = !config.pix_key;
     pixButton.title = config.pix_key ? "Pagar com Pix" : "Pix ainda indisponível";
     sumupButton.disabled = !config.sumup_ready;
-    sumupButton.title = config.sumup_ready ? "Pagar com cartão pelo SumUp" : "Pagamento por cartão temporariamente indisponível";
+    const missingSumUp = [];
+    if (config.sumup_token_configured === false) missingSumUp.push("chave de API");
+    if (config.sumup_merchant_configured === false) missingSumUp.push("código do estabelecimento");
+    if (config.sumup_amount_configured === false) missingSumUp.push("valor da compra");
+    sumupButton.title = config.sumup_ready
+      ? "Pagar com cartão pelo SumUp"
+      : "SumUp pendente: " + (missingSumUp.length ? missingSumUp.join(", ") : "configuração incompleta");
+    if (!config.sumup_ready && missingSumUp.length) {
+      payInfo.textContent += " Cartão SumUp indisponível: falta configurar " + missingSumUp.join(" e ") + " no servidor.";
+    }
   }
   async function loadAccount() {
     if (!token()) { dashboard.hidden = true; payPanel.hidden = true; return; }
