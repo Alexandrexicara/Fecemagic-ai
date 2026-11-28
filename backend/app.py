@@ -377,7 +377,17 @@ async def sumup_webhook(payload: dict):
 
 @app.get("/api/payments/config")
 def payment_config():
-    return {"amount": payment_amount(), "currency": "BRL", "pix_key": os.getenv("FACEMAGIC_PIX_KEY", "").strip() or None, "sumup_ready": bool(sumup_credentials()[0] and sumup_credentials()[1] and payment_amount())}
+    token, merchant = sumup_credentials()
+    amount = payment_amount()
+    return {
+        "amount": amount,
+        "currency": "BRL",
+        "pix_key": os.getenv("FACEMAGIC_PIX_KEY", "").strip() or None,
+        "sumup_token_configured": bool(token),
+        "sumup_merchant_configured": bool(merchant),
+        "sumup_amount_configured": bool(amount),
+        "sumup_ready": bool(token and merchant and amount),
+    }
 
 
 @app.get("/api/admin/registrations")
