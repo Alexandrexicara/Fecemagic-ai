@@ -439,7 +439,6 @@ def payment_config():
         "sumup_merchant_configured": bool(merchant),
         "sumup_amount_configured": bool(amount),
         "sumup_ready": bool(token and merchant and amount),
-        "sumup_merchant_code": merchant or None,
     }
 
 
