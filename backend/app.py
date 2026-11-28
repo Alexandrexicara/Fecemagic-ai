@@ -277,10 +277,60 @@ def payment_amount():
         return None
 
 
+SUMUP_MERCHANT_CACHE = ""
+
+
 def sumup_credentials():
     token = (os.getenv("SUMUP_API_KEY") or os.getenv("SUMUP_ACCESS_TOKEN") or "").strip()
     merchant = (os.getenv("SUMUP_MERCHANT_CODE") or os.getenv("SUMUP_MERCHANT_ID") or "").strip()
     return token, merchant
+
+
+def resolve_sumup_merchant(token):
+    global SUMUP_MERCHANT_CACHE
+    if SUMUP_MERCHANT_CACHE:
+        return SUMUP_MERCHANT_CACHE
+    if not token:
+        return ""
+
+    def get_json(path):
+        request = urllib.request.Request(
+            "https://api.sumup.com" + path,
+            method="GET",
+            headers={"Authorization": "Bearer " + token, "Accept": "application/json"},
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=15) as response:
+                return json.loads(response.read().decode("utf-8"))
+        except urllib.error.HTTPError as exc:
+            logger.info("SumUp merchant discovery returned HTTP %s", exc.code)
+            return {}
+        except Exception:
+            logger.info("SumUp merchant discovery request failed")
+            return {}
+
+    # Older API profile endpoint can return the merchant code directly.
+    profile = get_json("/v0.1/me")
+    merchant = str(profile.get("merchant_code") or profile.get("merchantCode") or "").strip()
+    if merchant:
+        SUMUP_MERCHANT_CACHE = merchant
+        return merchant
+
+    # Current API supports listing accepted merchant memberships for API keys.
+    memberships = get_json("/v0.1/memberships?kind=merchant&status=accepted&limit=25")
+    items = memberships.get("items") or []
+    codes = []
+    for item in items:
+        resource = item.get("resource") or {}
+        code = str(resource.get("id") or "").strip()
+        if code and code not in codes:
+            codes.append(code)
+    if len(codes) == 1:
+        SUMUP_MERCHANT_CACHE = codes[0]
+        return codes[0]
+    if len(codes) > 1:
+        logger.warning("SumUp API key has multiple merchant memberships; explicit merchant code required.")
+    return ""
 
 
 def sumup_request(method, path, body=None):
@@ -309,6 +359,7 @@ def sumup_request(method, path, body=None):
 def create_sumup_checkout(user=Depends(current_user)):
     amount = payment_amount()
     token, merchant = sumup_credentials()
+    merchant = merchant or resolve_sumup_merchant(token)
     if not amount:
         raise HTTPException(status_code=503, detail="Defina FACEMAGIC_PRICE_BRL no Render antes de iniciar o checkout.")
     if not token or not merchant:
@@ -378,6 +429,7 @@ async def sumup_webhook(payload: dict):
 @app.get("/api/payments/config")
 def payment_config():
     token, merchant = sumup_credentials()
+    merchant = merchant or resolve_sumup_merchant(token)
     amount = payment_amount()
     return {
         "amount": amount,
@@ -387,6 +439,7 @@ def payment_config():
         "sumup_merchant_configured": bool(merchant),
         "sumup_amount_configured": bool(amount),
         "sumup_ready": bool(token and merchant and amount),
+        "sumup_merchant_code": merchant or None,
     }
 
 
